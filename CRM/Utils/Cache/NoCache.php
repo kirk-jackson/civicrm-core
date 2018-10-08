@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,54 +23,56 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
-
 class CRM_Utils_Cache_NoCache implements CRM_Utils_Cache_Interface {
+
+  use CRM_Utils_Cache_NaiveMultipleTrait; // TODO Consider native implementation.
+  use CRM_Utils_Cache_NaiveHasTrait; // TODO Native implementation
 
   /**
    * We only need one instance of this object. So we use the singleton
    * pattern and cache the instance in this variable
    *
    * @var object
-   * @static
    */
   static private $_singleton = NULL;
 
   /**
-   * Constructor
+   * Constructor.
    *
-   * @param array $config an array of configuration params
+   * @param array $config
+   *   An array of configuration params.
    *
    * @return \CRM_Utils_Cache_NoCache
    */
-  function __construct($config) {
+  public function __construct($config) {
   }
 
   /**
    * @param string $key
    * @param mixed $value
+   * @param null|int|\DateInterval $ttl
    *
    * @return bool
    */
-  function set($key, &$value) {
+  public function set($key, $value, $ttl = NULL) {
     return FALSE;
   }
 
   /**
    * @param string $key
+   * @param mixed $default
    *
    * @return null
    */
-  function get($key) {
-    return NULL;
+  public function get($key, $default = NULL) {
+    return $default;
   }
 
   /**
@@ -78,15 +80,19 @@ class CRM_Utils_Cache_NoCache implements CRM_Utils_Cache_Interface {
    *
    * @return bool
    */
-  function delete($key) {
+  public function delete($key) {
     return FALSE;
   }
 
   /**
    * @return bool
    */
-  function flush() {
+  public function flush() {
     return FALSE;
   }
-}
 
+  public function clear() {
+    return $this->flush();
+  }
+
+}

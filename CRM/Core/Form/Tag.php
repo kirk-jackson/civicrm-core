@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,41 +23,41 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * This class generates form element for free tag widget
- *
+ * This class generates form element for free tag widget.
  */
 class CRM_Core_Form_Tag {
   public $_entityTagValues;
 
   /**
-   * Function to build tag widget if correct parent is passed
+   * Build tag widget if correct parent is passed
    *
-   * @param CRM_Core_Form $form form object
-   * @param string $parentNames parent name ( tag name)
-   * @param string $entityTable entitytable 'eg: civicrm_contact'
-   * @param int $entityId entityid  'eg: contact id'
-   * @param boolean $skipTagCreate true if tag need be created using ajax
-   * @param boolean $skipEntityAction true if need to add entry in entry table via ajax
-   * @param string $tagsetElementName if you need to create tagsetlist with specific name
-   *
-   * @internal param bool $searchMode true if widget is used in search eg: advanced search
-   * @return void
-   * @access public
-   * @static
+   * @param CRM_Core_Form $form
+   *   Form object.
+   * @param string $parentNames
+   *   Parent name ( tag name).
+   * @param string $entityTable
+   *   Entitytable 'eg: civicrm_contact'.
+   * @param int $entityId
+   *   Entityid 'eg: contact id'.
+   * @param bool $skipTagCreate
+   *   True if tag need be created using ajax.
+   * @param bool $skipEntityAction
+   *   True if need to add entry in entry table via ajax.
+   * @param string $tagsetElementName
+   *   If you need to create tagsetlist with specific name.
    */
-  static function buildQuickForm(&$form, $parentNames, $entityTable, $entityId = NULL, $skipTagCreate = FALSE,
-    $skipEntityAction = FALSE, $tagsetElementName = NULL ) {
+  public static function buildQuickForm(
+    &$form, $parentNames, $entityTable, $entityId = NULL, $skipTagCreate = FALSE,
+    $skipEntityAction = FALSE, $tagsetElementName = NULL) {
     $tagset = $form->_entityTagValues = array();
     $form->assign("isTagset", FALSE);
     $mode = NULL;
@@ -85,6 +85,7 @@ class CRM_Core_Form_Tag {
           'data-entity_table' => $entityTable,
           'data-entity_id' => $entityId,
           'class' => "crm-$mode-tagset",
+          'select' => array('minimumInputLength' => 0),
         ));
 
         if ($entityId) {
@@ -117,18 +118,17 @@ class CRM_Core_Form_Tag {
   }
 
   /**
-   * Function to save entity tags when it is not save used AJAX
+   * Save entity tags when it is not save used AJAX.
    *
-   * @param array   $params      associated array
-   * @param int     $entityId    entity id, eg: contact id, activity id, case id, file id
-   * @param string  $entityTable entity table
-   * @param object  $form        form object
-   *
-   * @return void
-   * @access public
-   * @static
+   * @param array $params
+   * @param int $entityId
+   *   Entity id, eg: contact id, activity id, case id, file id.
+   * @param string $entityTable
+   *   Entity table.
+   * @param CRM_Core_Form $form
+   *   Form object.
    */
-  static function postProcess(&$params, $entityId, $entityTable = 'civicrm_contact', &$form) {
+  public static function postProcess(&$params, $entityId, $entityTable = 'civicrm_contact', &$form = NULL) {
     if ($form && !empty($form->_entityTagValues)) {
       $existingTags = $form->_entityTagValues;
     }
@@ -153,31 +153,12 @@ class CRM_Core_Form_Tag {
     // are deleted we will have to set $params[tagset id] = '' which is done by above logic
     foreach ($params as $parentId => $value) {
       $newTagIds = array();
-      $realTagIds = array();
+      $tagIds = array();
 
       if ($value) {
-        $tagsIDs = explode(',', $value);
-        foreach ($tagsIDs as $tagId) {
-          if (!is_numeric($tagId)) {
-            // check if user has selected existing tag or is creating new tag
-            // this is done to allow numeric tags etc.
-            $tagValue = explode(':::', $tagId);
-
-            if (isset($tagValue[1]) && $tagValue[1] == 'value') {
-              $tagParams = array(
-                'name' => $tagValue[0],
-                'parent_id' => $parentId,
-              );
-              $tagObject = CRM_Core_BAO_Tag::add($tagParams, CRM_Core_DAO::$_nullArray);
-              $tagId = $tagObject->id;
-            }
-          }
-
-          $realTagIds[] = $tagId;
-          if ($form && $form->_action != CRM_Core_Action::UPDATE) {
-            $newTagIds[] = $tagId;
-          }
-          elseif (!array_key_exists($tagId, $existingTags)) {
+        $tagIds = explode(',', $value);
+        foreach ($tagIds as $tagId) {
+          if ($form && $form->_action != CRM_Core_Action::UPDATE || !array_key_exists($tagId, $existingTags)) {
             $newTagIds[] = $tagId;
           }
         }
@@ -189,8 +170,8 @@ class CRM_Core_Form_Tag {
                     WHERE civicrm_tag.id=civicrm_entity_tag.tag_id
                       AND civicrm_entity_tag.entity_table='{$entityTable}'
                       AND entity_id={$entityId} AND parent_id={$parentId}";
-      if (!empty($realTagIds)) {
-        $deleteSQL .= " AND tag_id NOT IN (" . implode(', ', $realTagIds) . ");";
+      if (!empty($tagIds)) {
+        $deleteSQL .= " AND tag_id NOT IN (" . implode(', ', $tagIds) . ");";
       }
 
       CRM_Core_DAO::executeQuery($deleteSQL);
@@ -207,5 +188,5 @@ class CRM_Core_Form_Tag {
       }
     }
   }
-}
 
+}

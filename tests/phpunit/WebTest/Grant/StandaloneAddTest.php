@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 
@@ -35,7 +35,7 @@ class WebTest_Grant_StandaloneAddTest extends CiviSeleniumTestCase {
     parent::setUp();
   }
 
-  function testStandaloneGrantAdd() {
+  public function testStandaloneGrantAdd() {
     // Log in as admin first to verify permissions for CiviGrant
     $this->webtestLogin('admin');
 
@@ -52,8 +52,7 @@ class WebTest_Grant_StandaloneAddTest extends CiviSeleniumTestCase {
     $this->openCiviPage('grant/add', 'reset=1&context=standalone', '_qf_Grant_upload');
 
     // create new contact using dialog
-    $firstName = substr(sha1(rand()), 0, 7);
-    $this->webtestNewDialogContact($firstName, "Grantor", $firstName . "@example.com");
+    $contact = $this->createDialogContact();
 
     // select grant Status
     $this->select("status_id", "value=1");
@@ -76,13 +75,13 @@ class WebTest_Grant_StandaloneAddTest extends CiviSeleniumTestCase {
     // fill in decision Date
     $this->webtestFillDate('decision_date');
 
-    // fill in money transfered date
+    // fill in money transferred date
     $this->webtestFillDate('money_transfer_date');
 
     // fill in grant due Date
     $this->webtestFillDate('grant_due_date');
 
-    // check  grant report recieved.
+    // check  grant report received.
     $this->check("grant_report_received");
 
     // grant  note
@@ -106,5 +105,5 @@ class WebTest_Grant_StandaloneAddTest extends CiviSeleniumTestCase {
 
     $this->webtestVerifyTabularData($expected);
   }
-}
 
+}

@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'WebTest/Import/ImportCiviSeleniumTestCase.php';
 
@@ -36,9 +36,9 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
   }
 
   /**
-   *  Function to check for Valid Street Address
+   * Check for Valid Street Address.
    */
-  function testValidStreetAddressParsing() {
+  public function testValidStreetAddressParsing() {
     $this->webtestLogin();
 
     //Go to the URL of Address Setting to enable street address parsing option
@@ -79,6 +79,7 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
       $actualvalue = $this->getValue($key);
       $this->assertEquals($expectedvalue, $actualvalue);
     }
+    $this->clickLink('_qf_Contact_upload_view-top');
 
     //Go to the URL of Address Setting to disable street address parsing option
     $this->openCiviPage("admin/setting/preferences/address", "reset=1");
@@ -89,10 +90,10 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
     $this->waitForPageToLoad($this->getTimeoutMsec());
   }
 
-  /*
-     *  Function to check for Invalid Street Address
-     */
-  function testInvalidStreetAddressParsing() {
+  /**
+   * Check for Invalid Street Address.
+   */
+  public function testInvalidStreetAddressParsing() {
     $this->webtestLogin();
 
     //Go to the URL of Address Setting to enable street address parsing option
@@ -146,9 +147,9 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
   }
 
   /**
-   *  Function to check Street Address when Address Parsing is Disabled
+   * Check Street Address when Address Parsing is Disabled.
    */
-  function testStreetAddress() {
+  public function testStreetAddress() {
     $this->webtestLogin();
 
     //Go to the URL of Address Setting to enable street address parsing option
@@ -181,13 +182,12 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
     $this->assertEquals('22 Adams Avenue Unit 3c', $actualvalue);
   }
 
-  /*
-     *  Helper function to provide csv data with Valid Street Address.
-     */
   /**
+   * Helper function to provide csv data with Valid Street Address.
+   *
    * @return array
    */
-  function _validStreetAddressCSVData() {
+  public function _validStreetAddressCSVData() {
     $headers = array(
       'first_name' => 'First Name',
       'middle_name' => 'Middle Name',
@@ -203,7 +203,8 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
     );
 
     $rows = array(
-      array('first_name' => 'A' . substr(sha1(rand()), 0, 7),
+      array(
+        'first_name' => 'A' . substr(sha1(rand()), 0, 7),
         'middle_name' => substr(sha1(rand()), 0, 7),
         'last_name' => substr(sha1(rand()), 0, 7) . 'and',
         'email' => substr(sha1(rand()), 0, 7) . '@example.com',
@@ -213,9 +214,10 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
-      array('first_name' => 'S' . substr(sha1(rand()), 0, 7),
+      array(
+        'first_name' => 'S' . substr(sha1(rand()), 0, 7),
         'middle_name' => substr(sha1(rand()), 0, 7),
         'last_name' => substr(sha1(rand()), 0, 7) . 'sum',
         'email' => substr(sha1(rand()), 0, 7) . '@example.com',
@@ -225,20 +227,19 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
     );
 
     return array($headers, $rows);
   }
 
-  /*
-     *  Helper function to provide csv data with Invalid Street Address.
-     */
   /**
+   * Helper function to provide csv data with Invalid Street Address.
+   *
    * @return array
    */
-  function _invalidStreetAddressCSVData() {
+  public function _invalidStreetAddressCSVData() {
     $headers = array(
       'first_name' => 'First Name',
       'middle_name' => 'Middle Name',
@@ -254,7 +255,8 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
     );
 
     $rows = array(
-      array('first_name' => 'A' . substr(sha1(rand()), 0, 7),
+      array(
+        'first_name' => 'A' . substr(sha1(rand()), 0, 7),
         'middle_name' => substr(sha1(rand()), 0, 7),
         'last_name' => substr(sha1(rand()), 0, 7) . 'and',
         'email' => substr(sha1(rand()), 0, 7) . '@example.com',
@@ -264,9 +266,10 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
-      array('first_name' => 'S' . substr(sha1(rand()), 0, 7),
+      array(
+        'first_name' => 'S' . substr(sha1(rand()), 0, 7),
         'middle_name' => substr(sha1(rand()), 0, 7),
         'last_name' => substr(sha1(rand()), 0, 7) . 'sum',
         'email' => substr(sha1(rand()), 0, 7) . '@example.com',
@@ -276,11 +279,11 @@ class WebTest_Import_AddressParsingTest extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
     );
 
     return array($headers, $rows);
   }
-}
 
+}

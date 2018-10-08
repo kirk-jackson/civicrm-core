@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,44 +23,43 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * Page for displaying list of jobs
+ * Page for displaying list of jobs.
  */
 class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
 
   /**
-   * The action links that we need to display for the browse screen
+   * The action links that we need to display for the browse screen.
    *
    * @var array
-   * @static
    */
   static $_links = NULL;
 
   /**
-   * Get BAO Name
+   * Get BAO Name.
    *
-   * @return string Classname of BAO.
+   * @return string
+   *   Classname of BAO.
    */
-  function getBAOName() {
+  public function getBAOName() {
     return 'CRM_Core_BAO_Job';
   }
 
   /**
-   * Get action Links
+   * Get action Links.
    *
-   * @return array (reference) of action links
+   * @return array
+   *   (reference) of action links
    */
-  function &links() {
+  public function &links() {
     if (!(self::$_links)) {
       self::$_links = array(
         CRM_Core_Action::FOLLOWUP => array(
@@ -97,6 +96,12 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
           'qs' => 'action=delete&id=%%id%%',
           'title' => ts('Delete Scheduled Job'),
         ),
+        CRM_Core_Action::COPY => array(
+          'name' => ts('Copy'),
+          'url' => 'civicrm/admin/job',
+          'qs' => 'action=copy&id=%%id%%',
+          'title' => ts('Copy Scheduled Job'),
+        ),
       );
     }
     return self::$_links;
@@ -108,19 +113,18 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
    * This method is called after the page is created. It checks for the
    * type of action and executes that action.
    * Finally it calls the parent's run method.
-   *
-   * @return void
-   * @access public
-   *
    */
-  function run() {
+  public function run() {
     // set title and breadcrumb
     CRM_Utils_System::setTitle(ts('Settings - Scheduled Jobs'));
-    $breadCrumb = array(array('title' => ts('Scheduled Jobs'),
+    $breadCrumb = array(
+      array(
+        'title' => ts('Scheduled Jobs'),
         'url' => CRM_Utils_System::url('civicrm/admin',
           'reset=1'
         ),
-      ));
+      ),
+    );
     CRM_Utils_System::appendBreadCrumb($breadCrumb);
 
     $this->_id = CRM_Utils_Request::retrieve('id', 'String',
@@ -130,11 +134,24 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
       $this, FALSE, 0
     );
 
+    // FIXME: Why are we comparing an integer with a string here?
     if ($this->_action == 'export') {
       $session = CRM_Core_Session::singleton();
       $session->pushUserContext(CRM_Utils_System::url('civicrm/admin/job', 'reset=1'));
     }
 
+    if (($this->_action & CRM_Core_Action::COPY) && (!empty($this->_id))) {
+      try {
+        $jobResult = civicrm_api3('Job', 'clone', array('id' => $this->_id));
+        if ($jobResult['count'] > 0) {
+          CRM_Core_Session::setStatus($jobResult['values'][$jobResult['id']]['name'], ts('Job copied successfully'), 'success');
+        }
+        CRM_Utils_System::redirect(CRM_Utils_System::url('civicrm/admin/job', 'reset=1'));
+      }
+      catch (Exception $e) {
+        CRM_Core_Session::setStatus(ts('Failed to copy job'), 'Error');
+      }
+    }
 
     return parent::run();
   }
@@ -143,12 +160,12 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
    * Browse all jobs.
    *
    * @param null $action
-   *
-   * @return void
-   * @access public
-   * @static
    */
-  function browse($action = NULL) {
+  public function browse($action = NULL) {
+    // check if non-prod mode is enabled.
+    if (CRM_Core_Config::environment() != 'Production') {
+      CRM_Core_Session::setStatus(ts('Execution of scheduled jobs has been turned off by default since this is a non-production environment. You can override this for particular jobs by adding runInNonProductionEnvironment=TRUE as a parameter.'), ts("Non-production Environment"), "warning", array('expires' => 0));
+    }
 
     // using Export action for Execute. Doh.
     if ($this->_action & CRM_Core_Action::EXPORT) {
@@ -190,20 +207,22 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
   }
 
   /**
-   * Get name of edit form
+   * Get name of edit form.
    *
-   * @return string Classname of edit form.
+   * @return string
+   *   Classname of edit form.
    */
-  function editForm() {
+  public function editForm() {
     return 'CRM_Admin_Form_Job';
   }
 
   /**
-   * Get edit form name
+   * Get edit form name.
    *
-   * @return string name of this page.
+   * @return string
+   *   name of this page.
    */
-  function editName() {
+  public function editName() {
     return 'Scheduled Jobs';
   }
 
@@ -212,10 +231,11 @@ class CRM_Admin_Page_Job extends CRM_Core_Page_Basic {
    *
    * @param null $mode
    *
-   * @return string user context.
+   * @return string
+   *   user context.
    */
-  function userContext($mode = NULL) {
+  public function userContext($mode = NULL) {
     return 'civicrm/admin/job';
   }
-}
 
+}

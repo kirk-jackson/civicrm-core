@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,19 +23,16 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * This class generates form components for Activity Filter
- *
+ * This class generates form components for Activity Filter.
  */
 class CRM_Activity_Form_ActivityFilter extends CRM_Core_Form {
   public function buildQuickForm() {
@@ -45,6 +42,16 @@ class CRM_Activity_Form_ActivityFilter extends CRM_Core_Form {
 
     $this->add('select', 'activity_type_filter_id', ts('Include'), array('' => ts('- all activity type(s) -')) + $activityOptions);
     $this->add('select', 'activity_type_exclude_filter_id', ts('Exclude'), array('' => ts('- select activity type -')) + $activityOptions);
+    CRM_Core_Form_Date::buildDateRange(
+      $this, 'activity_date', 1,
+      '_low', '_high', ts('From:'),
+      FALSE, array(), 'searchDate',
+      FALSE, array('class' => 'crm-select2 medium')
+    );
+    $this->addSelect('status_id',
+      array('entity' => 'activity', 'multiple' => 'multiple', 'option_url' => NULL, 'placeholder' => ts('- any -'))
+    );
+
     $this->assign('suppressForm', TRUE);
   }
 
@@ -54,35 +61,20 @@ class CRM_Activity_Form_ActivityFilter extends CRM_Core_Form {
    *
    * access        public
    *
-   * @return array reference to the array of default values
-   *
-   */
-  /**
-   * This virtual function is used to set the default values of
-   * various form elements
-   *
-   * access        public
-   *
-   * @return array reference to the array of default values
-   *
-   */
-  /**
    * @return array
+   *   reference to the array of default values
    */
-  function setDefaultValues() {
+  public function setDefaultValues() {
     // CRM-11761 retrieve user's activity filter preferences
     $defaults = array();
-    $session = CRM_Core_Session::singleton();
-    $userID = $session->get('userID');
-    if ($userID) {
-      $defaults = CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::PERSONAL_PREFERENCES_NAME,
-        'activity_tab_filter',
-        NULL,
-        NULL,
-        $userID
-      );
+    if (Civi::settings()->get('preserve_activity_tab_filter') && (CRM_Core_Session::getLoggedInContactID())) {
+      $defaults = Civi::contactSettings()->get('activity_tab_filter');
+    }
+    // set Activity status 'Scheduled' by default only for dashlet
+    elseif (strstr(CRM_Utils_Array::value('q', $_GET), 'dashlet')) {
+      $defaults['status_id'] = CRM_Core_PseudoConstant::getKey('CRM_Activity_BAO_Activity', 'status_id', 'Scheduled');
     }
     return $defaults;
   }
-}
 
+}

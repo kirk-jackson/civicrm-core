@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -24,7 +24,7 @@
  +--------------------------------------------------------------------+
 *}
 {if empty($tagsetType)}
-  {assign var="tagsetType" value="contact"}contact{/capture}
+  {assign var="tagsetType" value="contact"}
 {/if}
 {foreach from=$tagsetInfo.$tagsetType item=tagset}
   {assign var="elemName" value=$tagset.tagsetElementName}

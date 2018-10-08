@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,18 +23,14 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
-class CRM_Contact_Form_Search_Custom_Group
-  extends CRM_Contact_Form_Search_Custom_Base
-  implements CRM_Contact_Form_Search_Interface {
+class CRM_Contact_Form_Search_Custom_Group extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
 
   protected $_formValues;
 
@@ -46,12 +42,14 @@ class CRM_Contact_Form_Search_Custom_Group
   protected $_aclWhere = NULL;
 
   /**
-   * @param $formValues
+   * Class constructor.
+   *
+   * @param array $formValues
    */
-  function __construct(&$formValues) {
+  public function __construct(&$formValues) {
     $this->_formValues = $formValues;
     $this->_columns = array(
-      ts('Contact Id') => 'contact_id',
+      ts('Contact ID') => 'contact_id',
       ts('Contact Type') => 'contact_type',
       ts('Name') => 'sort_name',
       ts('Group Name') => 'gname',
@@ -65,11 +63,9 @@ class CRM_Contact_Form_Search_Custom_Group
 
     //define variables
     $this->_allSearch = FALSE;
-    $this->_groups    = FALSE;
-    $this->_tags      = FALSE;
-    $this->_andOr     = CRM_Utils_Array::value('andOr', $this->_formValues);
-
-
+    $this->_groups = FALSE;
+    $this->_tags = FALSE;
+    $this->_andOr = CRM_Utils_Array::value('andOr', $this->_formValues);
     //make easy to check conditions for groups and tags are
     //selected or it is empty search
     if (empty($this->_includeGroups) && empty($this->_excludeGroups) &&
@@ -84,20 +80,20 @@ class CRM_Contact_Form_Search_Custom_Group
     $this->_tags = (!empty($this->_includeTags) || !empty($this->_excludeTags));
   }
 
-  function __destruct() {
-    // mysql drops the tables when connectiomn is terminated
+  public function __destruct() {
+    // mysql drops the tables when connection is terminated
     // cannot drop tables here, since the search might be used
     // in other parts after the object is destroyed
   }
 
   /**
-   * @param $form
+   * @param CRM_Core_Form $form
    */
-  function buildForm(&$form) {
+  public function buildForm(&$form) {
 
     $this->setTitle(ts('Include / Exclude Search'));
 
-    $groups = CRM_Core_PseudoConstant::group();
+    $groups = CRM_Core_PseudoConstant::nestedGroup();
 
     $tags = CRM_Core_PseudoConstant::get('CRM_Core_DAO_EntityTag', 'tag_id', array('onlyActive' => FALSE));
     if (count($groups) == 0 || count($tags) == 0) {
@@ -106,22 +102,25 @@ class CRM_Contact_Form_Search_Custom_Group
       CRM_Utils_System::redirect($url);
     }
 
-    $inG = &$form->addElement('advmultiselect', 'includeGroups',
-      ts('Include Group(s)') . ' ', $groups,
-      array(
-        'size' => 5,
-        'style' => 'width:240px',
-        'class' => 'advmultiselect',
-      )
+    $select2style = array(
+      'multiple' => TRUE,
+      'style' => 'width: 100%; max-width: 60em;',
+      'class' => 'crm-select2',
+      'placeholder' => ts('- select -'),
     );
 
-    $outG = &$form->addElement('advmultiselect', 'excludeGroups',
-      ts('Exclude Group(s)') . ' ', $groups,
-      array(
-        'size' => 5,
-        'style' => 'width:240px',
-        'class' => 'advmultiselect',
-      )
+    $form->add('select', 'includeGroups',
+      ts('Include Group(s)'),
+      $groups,
+      FALSE,
+      $select2style
+    );
+
+    $form->add('select', 'excludeGroups',
+      ts('Exclude Group(s)'),
+      $groups,
+      FALSE,
+      $select2style
     );
 
     $andOr = array(
@@ -130,35 +129,19 @@ class CRM_Contact_Form_Search_Custom_Group
     );
     $form->addRadio('andOr', ts('AND/OR'), $andOr, NULL, '<br />', TRUE);
 
-    $int = &$form->addElement('advmultiselect', 'includeTags',
-      ts('Include Tag(s)') . ' ', $tags,
-      array(
-        'size' => 5,
-        'style' => 'width:240px',
-        'class' => 'advmultiselect',
-      )
+    $form->add('select', 'includeTags',
+      ts('Include Tag(s)'),
+      $tags,
+      FALSE,
+      $select2style
     );
 
-    $outt = &$form->addElement('advmultiselect', 'excludeTags',
-      ts('Exclude Tag(s)') . ' ', $tags,
-      array(
-        'size' => 5,
-        'style' => 'width:240px',
-        'class' => 'advmultiselect',
-      )
+    $form->add('select', 'excludeTags',
+      ts('Exclude Tag(s)'),
+      $tags,
+      FALSE,
+      $select2style
     );
-
-    //add/remove buttons for groups
-    $inG->setButtonAttributes('add', array('value' => ts('Add >>')));;
-    $outG->setButtonAttributes('add', array('value' => ts('Add >>')));;
-    $inG->setButtonAttributes('remove', array('value' => ts('<< Remove')));;
-    $outG->setButtonAttributes('remove', array('value' => ts('<< Remove')));;
-
-    //add/remove buttons for tags
-    $int->setButtonAttributes('add', array('value' => ts('Add >>')));;
-    $outt->setButtonAttributes('add', array('value' => ts('Add >>')));;
-    $int->setButtonAttributes('remove', array('value' => ts('<< Remove')));;
-    $outt->setButtonAttributes('remove', array('value' => ts('<< Remove')));;
 
     /**
      * if you are using the standard template, this array tells the template what elements
@@ -167,35 +150,16 @@ class CRM_Contact_Form_Search_Custom_Group
     $form->assign('elements', array('includeGroups', 'excludeGroups', 'andOr', 'includeTags', 'excludeTags'));
   }
 
-  /*
-   * Set search form field defaults here.
-   */
-  /**
-   * @return array
-   */
-  function setDefaultValues() {
-    $defaults = array( 'andOr' => '1' );
-
-    if (!empty($this->_formValues)) {
-      $defaults['andOr'] = CRM_Utils_Array::value('andOr', $this->_formValues, '1');
-
-      $defaults['includeGroups'] = CRM_Utils_Array::value('includeGroups', $this->_formValues);
-      $defaults['excludeGroups'] = CRM_Utils_Array::value('excludeGroups', $this->_formValues);
-    }
-
-    return $defaults;
-  }
-
   /**
    * @param int $offset
    * @param int $rowcount
-   * @param null $sort
+   * @param NULL $sort
    * @param bool $includeContactIDs
    * @param bool $justIDs
    *
    * @return string
    */
-  function all(
+  public function all(
     $offset = 0, $rowcount = 0, $sort = NULL,
     $includeContactIDs = FALSE, $justIDs = FALSE
   ) {
@@ -210,19 +174,19 @@ class CRM_Contact_Form_Search_Custom_Group
 
       //distinguish column according to user selection
       if (($this->_includeGroups && !$this->_includeTags)) {
-        unset($this->_columns['Tag Name']);
+        unset($this->_columns[ts('Tag Name')]);
         $selectClause .= ", GROUP_CONCAT(DISTINCT group_names ORDER BY group_names ASC ) as gname";
       }
       elseif ($this->_includeTags && (!$this->_includeGroups)) {
-        unset($this->_columns['Group Name']);
+        unset($this->_columns[ts('Group Name')]);
         $selectClause .= ", GROUP_CONCAT(DISTINCT tag_names  ORDER BY tag_names ASC ) as tname";
       }
       elseif (!empty($this->_includeTags) && !empty($this->_includeGroups)) {
         $selectClause .= ", GROUP_CONCAT(DISTINCT group_names ORDER BY group_names ASC ) as gname , GROUP_CONCAT(DISTINCT tag_names ORDER BY tag_names ASC ) as tname";
       }
       else {
-        unset($this->_columns['Tag Name']);
-        unset($this->_columns['Group Name']);
+        unset($this->_columns[ts('Tag Name')]);
+        unset($this->_columns[ts('Group Name')]);
       }
     }
 
@@ -239,7 +203,7 @@ class CRM_Contact_Form_Search_Custom_Group
       // adding a groupBy clause and saving it as a smart group messes up the query and
       // bad things happen
       // andrew hunt seemed to have rewritten this piece when he worked on this search
-      $groupBy = null;
+      $groupBy = NULL;
     }
 
     $sql = "SELECT $selectClause $from WHERE  $where $groupBy";
@@ -259,6 +223,9 @@ class CRM_Contact_Form_Search_Custom_Group
         $sql .= " ORDER BY contact_id ASC";
       }
     }
+    else {
+      $sql .= " ORDER BY contact_a.id ASC";
+    }
 
     if ($offset >= 0 && $rowcount > 0) {
       $sql .= " LIMIT $offset, $rowcount ";
@@ -271,7 +238,7 @@ class CRM_Contact_Form_Search_Custom_Group
    * @return string
    * @throws Exception
    */
-  function from() {
+  public function from() {
 
     $iGroups = $xGroups = $iTags = $xTags = 0;
 
@@ -293,6 +260,12 @@ class CRM_Contact_Form_Search_Custom_Group
       }
       $includedGroups = implode(',', $allGroups);
 
+      //CRM-15049 - Include child group ids.
+      $childGroupIds = CRM_Contact_BAO_Group::getChildGroupIds($this->_includeGroups);
+      if (count($childGroupIds) > 0) {
+        $this->_includeGroups = array_merge($this->_includeGroups, $childGroupIds);
+      }
+
       if (!empty($this->_includeGroups)) {
         $iGroups = implode(',', $this->_includeGroups);
       }
@@ -307,7 +280,7 @@ class CRM_Contact_Form_Search_Custom_Group
         $xGroups = 0;
       }
 
-      $sql = "CREATE TEMPORARY TABLE Xg_{$this->_tableName} ( contact_id int primary key) ENGINE=MyISAM";
+      $sql = "CREATE TEMPORARY TABLE Xg_{$this->_tableName} ( contact_id int primary key) ENGINE=InnoDB";
       CRM_Core_DAO::executeQuery($sql);
 
       //used only when exclude group is selected
@@ -345,7 +318,7 @@ WHERE  gcc.group_id = {$ssGroup->id}
 
       $sql = "CREATE TEMPORARY TABLE Ig_{$this->_tableName} ( id int PRIMARY KEY AUTO_INCREMENT,
                                                                    contact_id int,
-                                                                   group_names varchar(64)) ENGINE=MyISAM";
+                                                                   group_names varchar(64)) ENGINE=InnoDB";
 
       CRM_Core_DAO::executeQuery($sql);
 
@@ -363,8 +336,6 @@ WHERE  gcc.group_id = {$ssGroup->id}
                  SELECT              civicrm_contact.id as contact_id, ''
                  FROM                civicrm_contact";
       }
-
-
       //used only when exclude group is selected
       if ($xGroups != 0) {
         $includeGroup .= " LEFT JOIN        Xg_{$this->_tableName}
@@ -449,7 +420,7 @@ WHERE  gcc.group_id = {$ssGroup->id}
         $xTags = 0;
       }
 
-      $sql = "CREATE TEMPORARY TABLE Xt_{$this->_tableName} ( contact_id int primary key) ENGINE=MyISAM";
+      $sql = "CREATE TEMPORARY TABLE Xt_{$this->_tableName} ( contact_id int primary key) ENGINE=InnoDB";
       CRM_Core_DAO::executeQuery($sql);
 
       //used only when exclude tag is selected
@@ -467,7 +438,7 @@ WHERE  gcc.group_id = {$ssGroup->id}
 
       $sql = "CREATE TEMPORARY TABLE It_{$this->_tableName} ( id int PRIMARY KEY AUTO_INCREMENT,
                                                                contact_id int,
-                                                               tag_names varchar(64)) ENGINE=MyISAM";
+                                                               tag_names varchar(64)) ENGINE=InnoDB";
 
       CRM_Core_DAO::executeQuery($sql);
 
@@ -574,7 +545,7 @@ WHERE  gcc.group_id = {$ssGroup->id}
    *
    * @return string
    */
-  function where($includeContactIDs = FALSE) {
+  public function where($includeContactIDs = FALSE) {
     if ($includeContactIDs) {
       $contactIDs = array();
 
@@ -600,12 +571,13 @@ WHERE  gcc.group_id = {$ssGroup->id}
   }
 
   /*
-     * Functions below generally don't need to be modified
-     */
-  /**
-   * @return mixed
+   * Functions below generally don't need to be modified
    */
-  function count() {
+
+  /**
+   * @inheritDoc
+   */
+  public function count() {
     $sql = $this->all();
 
     $dao = CRM_Core_DAO::executeQuery($sql);
@@ -615,40 +587,48 @@ WHERE  gcc.group_id = {$ssGroup->id}
   /**
    * @param int $offset
    * @param int $rowcount
-   * @param null $sort
+   * @param NULL $sort
    * @param bool $returnSQL
    *
    * @return string
    */
-  function contactIDs($offset = 0, $rowcount = 0, $sort = NULL, $returnSQL = FALSE) {
+  public function contactIDs($offset = 0, $rowcount = 0, $sort = NULL, $returnSQL = FALSE) {
     return $this->all($offset, $rowcount, $sort, FALSE, TRUE);
   }
 
   /**
+   * Define columns.
+   *
    * @return array
    */
-  function &columns() {
+  public function &columns() {
     return $this->_columns;
   }
 
   /**
-   * @return null
+   * Get summary.
+   *
+   * @return NULL
    */
-  function summary() {
+  public function summary() {
     return NULL;
   }
 
   /**
+   * Get template file.
+   *
    * @return string
    */
-  function templateFile() {
+  public function templateFile() {
     return 'CRM/Contact/Form/Search/Custom.tpl';
   }
 
   /**
-   * @param $title
+   * Set title on search.
+   *
+   * @param string $title
    */
-  function setTitle($title) {
+  public function setTitle($title) {
     if ($title) {
       CRM_Utils_System::setTitle($title);
     }
@@ -658,10 +638,12 @@ WHERE  gcc.group_id = {$ssGroup->id}
   }
 
   /**
+   * Build ACL clause.
+   *
    * @param string $tableAlias
    */
-  function buildACLClause($tableAlias = 'contact') {
+  public function buildACLClause($tableAlias = 'contact') {
     list($this->_aclFrom, $this->_aclWhere) = CRM_Contact_BAO_Contact_Permission::cacheClause($tableAlias);
   }
-}
 
+}

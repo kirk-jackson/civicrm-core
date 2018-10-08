@@ -1,35 +1,20 @@
 <?php
-require_once 'CiviTest/CiviUnitTestCase.php';
+require_once 'CiviTest/CiviCaseTestCase.php';
 
 /**
  * Class CRM_Case_PseudoConstantTest
+ * @group headless
  */
-class CRM_Case_PseudoConstantTest extends CiviUnitTestCase {
-  /**
-   * @return array
-   */
-  function get_info() {
-    return array(
-      'name' => 'Case PseudoConstants',
-      'description' => 'Test Case_PseudoConstant methods.',
-      'group' => 'Case',
-    );
-  }
+class CRM_Case_PseudoConstantTest extends CiviCaseTestCase {
 
-  function setUp() {
-    parent::setUp();
-
-    $this->loadAllFixtures();
-
-    CRM_Core_BAO_ConfigSetting::enableComponent('CiviCase');
-  }
-
-  function testCaseType() {
+  public function testCaseType() {
     CRM_Core_PseudoConstant::flush();
     $caseTypes = CRM_Case_PseudoConstant::caseType();
     $expectedTypes = array(
-        1 => 'Housing Support',
+      1 => 'Housing Support',
+      2 => 'Adult Day Care Referral',
     );
     $this->assertEquals($expectedTypes, $caseTypes);
   }
+
 }

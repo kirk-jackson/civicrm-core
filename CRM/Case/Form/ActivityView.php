@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,34 +23,27 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * This class does pre processing for viewing an activity or their revisions
- *
+ * This class does pre processing for viewing an activity or their revisions.
  */
 class CRM_Case_Form_ActivityView extends CRM_Core_Form {
 
   /**
-   * Function to process the view
-   *
-   * @access public
-   *
-   * @return void
+   * Process the view.
    */
   public function preProcess() {
-    $contactID       = CRM_Utils_Request::retrieve('cid', 'Integer', $this, TRUE);
-    $activityID      = CRM_Utils_Request::retrieve('aid', 'Integer', $this, TRUE);
-    $revs            = CRM_Utils_Request::retrieve('revs', 'Boolean', CRM_Core_DAO::$_nullObject);
-    $caseID          = CRM_Utils_Request::retrieve('caseID', 'Boolean', CRM_Core_DAO::$_nullObject);
+    $contactID = CRM_Utils_Request::retrieve('cid', 'Integer', $this, TRUE);
+    $activityID = CRM_Utils_Request::retrieve('aid', 'Integer', $this, TRUE);
+    $revs = CRM_Utils_Request::retrieve('revs', 'Boolean');
+    $caseID = CRM_Utils_Request::retrieve('caseID', 'Boolean');
     $activitySubject = CRM_Core_DAO::getFieldValue('CRM_Activity_DAO_Activity',
       $activityID,
       'subject'
@@ -130,7 +123,7 @@ class CRM_Case_Form_ActivityView extends CRM_Core_Form {
     //viewing activity should get diplayed in recent list.CRM-4670
     $activityTypeID = CRM_Core_DAO::getFieldValue('CRM_Activity_DAO_Activity', $activityID, 'activity_type_id');
 
-    $activityContacts = CRM_Core_OptionGroup::values('activity_contacts', FALSE, FALSE, FALSE, NULL, 'name');
+    $activityContacts = CRM_Activity_BAO_ActivityContact::buildOptions('record_type_id', 'validate');
     $targetID = CRM_Utils_Array::key('Activity Targets', $activityContacts);
     $activityTargetContacts = CRM_Activity_BAO_ActivityContact::retrieveContactIdsByActivityId($activityID, $targetID);
     if (!empty($activityTargetContacts)) {
@@ -179,6 +172,38 @@ class CRM_Case_Form_ActivityView extends CRM_Core_Form {
       $recentContactDisplay,
       $recentOther
     );
-  }
-}
 
+    // Set breadcrumb to take the user back to the case being viewed
+    $caseTypeId = CRM_Core_DAO::getFieldValue('CRM_Case_DAO_Case', $caseID, 'case_type_id');
+    $caseType = CRM_Core_PseudoConstant::getLabel('CRM_Case_BAO_Case', 'case_type_id', $caseTypeId);
+    $caseContact = CRM_Core_DAO::getFieldValue('CRM_Case_DAO_CaseContact', $caseID, 'contact_id', 'case_id');
+
+    CRM_Utils_System::resetBreadCrumb();
+    $breadcrumb = [
+      [
+        'title' => ts('Home'),
+        'url' => CRM_Utils_System::url(),
+      ],
+      [
+        'title' => ts('CiviCRM'),
+        'url' => CRM_Utils_System::url('civicrm', 'reset=1'),
+      ],
+      [
+        'title' => ts('CiviCase Dashboard'),
+        'url' => CRM_Utils_System::url('civicrm/case', 'reset=1'),
+      ],
+      [
+        'title' => $caseType,
+        'url' => CRM_Utils_System::url('civicrm/contact/view/case', [
+          'reset' => 1,
+          'id' => $caseID,
+          'context' => 'case',
+          'action' => 'view',
+          'cid' => $caseContact,
+        ]),
+      ],
+    ];
+    CRM_Utils_System::appendBreadCrumb($breadcrumb);
+  }
+
+}

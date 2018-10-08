@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -30,23 +30,23 @@
 
  {* WizardHeader.tpl provides visual display of steps thru the wizard as well as title for current step *}
  {include file="CRM/common/WizardHeader.tpl"}
-<div id="help">
+<div class="help">
     <p>
     {ts}<strong>Import has completed successfully.</strong> The information below summarizes the results.{/ts}
     </p>
-    
+
    {if $unMatchCount }
         <p class="error">
-        {ts count=$unMatchCount plural='CiviCRM has detected mismatched contact IDs. These records have not been updated.'}CiviCRM has detected mismatched contact ID. This record have not been updated.{/ts}
+        {ts count=$unMatchCount plural='CiviCRM has detected mismatched contact IDs. These records have not been updated.'}CiviCRM has detected mismatched contact ID. This record has not been updated.{/ts}
         </p>
         <p class="error">
         {ts 1=$downloadMismatchRecordsUrl}You can <a href='%1'>Download Mismatched Contacts</a>. You may then correct them, and import the new file with the corrected data.{/ts}
         </p>
-    {/if} 
-   
+    {/if}
+
     {if $invalidRowCount }
         <p class="error">
-        {ts count=$invalidRowCount plural='CiviCRM has detected invalid data and/or formatting errors in %count records. These records have not been imported.'}CiviCRM has detected invalid data and/or formatting errors in one record. This record have not been imported.{/ts}
+        {ts count=$invalidRowCount plural='CiviCRM has detected invalid data and/or formatting errors in %count records. These records have not been imported.'}CiviCRM has detected invalid data and/or formatting errors in one record. This record has not been imported.{/ts}
         </p>
         <p class="error">
         {ts 1=$downloadErrorRecordsUrl}You can <a href='%1'>Download Errors</a>. You may then correct them, and import the new file with the corrected data.{/ts}
@@ -55,7 +55,7 @@
 
     {if $conflictRowCount}
         <p class="error">
-        {ts count=$conflictRowCount plural='CiviCRM has detected %count records with conflicting email addresses within this data file or relative to existing contact records. These records have not been imported.'}CiviCRM has detected one record with conflicting email addresses within this data file or relative to existing contact records. This record have not been imported.{/ts} {ts}CiviCRM does not allow multiple contact records to have the same primary email address.{/ts}
+        {ts count=$conflictRowCount plural='CiviCRM has detected %count records with conflicting email addresses within this data file or relative to existing contact records. These records have not been imported.'}CiviCRM has detected one record with conflicting email addresses within this data file or relative to existing contact records. This record has not been imported.{/ts} {ts}CiviCRM does not allow multiple contact records to have the same primary email address.{/ts}
         </p>
         <p class="error">
         {ts 1=$downloadConflictRecordsUrl}You can <a href='%1'>Download Conflicts</a>. You may then review these records to determine if they are actually conflicts, and correct the email addresses for those that are not.{/ts}
@@ -77,17 +77,17 @@
         {ts 1=$downloadAddressRecordsUrl}You can <a href='%1'>Download Street Address Records </a>. You may then edit those contact records and update the street address accordingly.{/ts}
         </p>
     {/if}
- </div> 
- <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="top"}</div>   
+ </div>
+ <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="top"}</div>
  {* Summary of Import Results (record counts) *}
  <table id="summary-counts" class="report">
-    <tr><td class="label">{ts}Total Rows{/ts}</td>
+    <tr><td class="label crm-grid-cell">{ts}Total Rows{/ts}</td>
         <td class="data">{$totalRowCount}</td>
         <td class="explanation">{ts}Total number of rows in the imported data.{/ts}</td>
     </tr>
 
     {if $invalidRowCount }
-    <tr class="error"><td class="label">{ts}Invalid Rows (skipped){/ts}</td>
+    <tr class="error"><td class="label crm-grid-cell">{ts}Invalid Rows (skipped){/ts}</td>
         <td class="data">{$invalidRowCount}</td>
         <td class="explanation">{ts}Rows with invalid data in one or more fields (for example, invalid email address formatting). These rows will be skipped (not imported).{/ts}
             {if $invalidRowCount}
@@ -96,9 +96,9 @@
         </td>
     </tr>
     {/if}
-    
+
     {if $unMatchCount }
-    <tr class="error"><td class="label">{ts}Mismatched Rows (skipped){/ts}</td>
+    <tr class="error"><td class="label crm-grid-cell">{ts}Mismatched Rows (skipped){/ts}</td>
         <td class="data">{$unMatchCount}</td>
         <td class="explanation">{ts}Rows with mismatched contact IDs... (NOT updated).{/ts}
             {if $unMatchCount}
@@ -107,9 +107,9 @@
         </td>
     </tr>
     {/if}
-    
+
     {if $conflictRowCount}
-    <tr class="error"><td class="label">{ts}Conflicting Rows (skipped){/ts}</td>
+    <tr class="error"><td class="label crm-grid-cell">{ts}Conflicting Rows (skipped){/ts}</td>
         <td class="data">{$conflictRowCount}</td>
         <td class="explanation">{ts}Rows with conflicting email addresses (NOT imported).{/ts}
             {if $conflictRowCount}
@@ -120,7 +120,7 @@
     {/if}
 
     {if $duplicateRowCount && $dupeError}
-    <tr class="error"><td class="label">{ts}Duplicate Rows{/ts}</td>
+    <tr class="error"><td class="label crm-grid-cell">{ts}Duplicate Rows{/ts}</td>
         <td class="data">{$duplicateRowCount}</td>
         <td class="explanation">{ts}Rows which are duplicates of existing CiviCRM contact records.{/ts} {$dupeActionString}
             {if $duplicateRowCount}
@@ -129,14 +129,14 @@
         </td>
     </tr>
     {/if}
-    
-    <tr><td class="label">{ts}Total Contacts{/ts}</td>
+
+    <tr><td class="label crm-grid-cell">{ts}Total Contacts{/ts}</td>
         <td class="data">{$validRowCount}</td>
         <td class="explanation">{ts}Total number of contact records created or modified during the import.{/ts}</td>
     </tr>
 
     {if $groupAdditions}
-    <tr><td class="label">{ts}Import to Groups{/ts}</td>
+    <tr><td class="label crm-grid-cell">{ts}Import to Groups{/ts}</td>
         <td colspan="2" class="explanation">
             {foreach from="$groupAdditions" item="group"}
                 <label><a href="{$group.url}">{$group.name}</a></label>:
@@ -152,7 +152,7 @@
     {/if}
 
     {if $tagAdditions}
-    <tr><td class="label">{ts}Tagged Imported Contacts{/ts}</td>
+    <tr><td class="label crm-grid-cell">{ts}Tagged Imported Contacts{/ts}</td>
         <td colspan="2" class="explanation">
             {foreach from="$tagAdditions" item="tag"}
                 <label>{$tag.name}</label>:
@@ -164,7 +164,7 @@
     {/if}
 
  </table>
- 
+
  <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
 </div>
- 
+

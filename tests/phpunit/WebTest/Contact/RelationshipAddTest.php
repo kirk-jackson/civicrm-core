@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 
@@ -35,7 +35,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     parent::setUp();
   }
 
-  function testRelationshipAddTest() {
+  public function testRelationshipAddTest() {
     $this->webtestLogin();
 
     //create a relationship type between different contact types
@@ -79,7 +79,6 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     //fill in the individual
     $this->select2('related_contact_id', $sortName, TRUE);
 
-
     //fill in the relationship start date
     $this->webtestFillDate('start_date', '-2 year');
     $this->webtestFillDate('end_date', '+1 year');
@@ -90,13 +89,11 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     //save the relationship
     //$this->click("_qf_Relationship_upload");
     $this->click('_qf_Relationship_upload-bottom');
-    $this->waitForElementPresent("crm-contact-relationship-selector-current_wrapper");
 
     //check the status message
     $this->waitForText('crm-notification-container', 'Relationship created.');
-
-    $this->waitForElementPresent("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
-    $this->click("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
+    $this->waitForElementPresent("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
+    $this->click("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
 
     $this->webtestVerifyTabularData(
       array(
@@ -163,8 +160,8 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $this->select('relationship_type_id', "label={$params['label_b_a']}");
 
     //fill in the individual
+    $this->waitForElementPresent("related_contact_id");
     $this->select2('related_contact_id', $sortName, TRUE);
-
 
     //fill in the relationship start date
     $this->webtestFillDate('start_date', '-2 year');
@@ -175,10 +172,9 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
 
     //save the relationship
     $this->click('_qf_Relationship_upload-bottom');
-    $this->waitForElementPresent("crm-contact-relationship-selector-current_wrapper");
 
-    $this->waitForElementPresent("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
-    $this->click("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
+    $this->waitForElementPresent("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
+    $this->click("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
 
     $this->webtestVerifyTabularData(
       array(
@@ -191,7 +187,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
 
     //test for individual contact and household subtype contact
     //relationship
-    $typeb = "Household__". $householdSubtypeName;
+    $typeb = "Household__" . $householdSubtypeName;
 
     //create a relationship type between different contact types
     $params = array(
@@ -268,10 +264,9 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
 
     //save the relationship
     $this->click('_qf_Relationship_upload-bottom');
-    $this->waitForElementPresent("crm-contact-relationship-selector-current_wrapper");
 
-    $this->waitForElementPresent("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
-    $this->click("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
+    $this->waitForElementPresent("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
+    $this->click("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
 
     $this->webtestVerifyTabularData(
       array(
@@ -283,7 +278,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $this->assertTrue($this->isTextPresent($params['label_b_a']));
   }
 
-  function testRelationshipAddNewIndividualTest() {
+  public function testRelationshipAddNewIndividualTest() {
     $this->webtestLogin();
 
     //create a relationship type between different contact types
@@ -311,11 +306,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     //choose the created relationship type
     $this->waitForElementPresent("relationship_type_id");
     $this->select('relationship_type_id', "label={$params['label_a_b']}");
-
-    // Because it tends to cause problems, all uses of sleep() must be justified in comments
-    // Sleep should never be used for wait for anything to load from the server
-    // Justification for this instance: wait until new contact dialog select is built
-    sleep(2);
+    $this->waitForAjaxContent();
 
     // create a new organization
     $orgName = 'WestsideCoop' . substr(sha1(rand()), 0, 7);
@@ -326,7 +317,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $this->type('organization_name', $orgName);
     $this->type('email-Primary', "info@" . $orgName . ".com");
     $this->click('_qf_Edit_next');
-    $this->waitForText("xpath=//div[@id='s2id_related_contact_id']","$orgName");
+    $this->waitForText("xpath=//div[@id='s2id_related_contact_id']", "$orgName");
 
     //fill in the relationship start date
     $this->webtestFillDate('start_date', '-2 year');
@@ -338,13 +329,11 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     //save the relationship
     //$this->click("_qf_Relationship_upload");
     $this->click("_qf_Relationship_upload-bottom");
-    $this->waitForElementPresent("crm-contact-relationship-selector-current_wrapper");
 
     //check the status message
     $this->waitForText('crm-notification-container', 'Relationship created.');
-
-    $this->waitForElementPresent("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
-    $this->click("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
+    $this->waitForElementPresent("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]/span[1]//a[text()='View']");
+    $this->click("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]/span[1]//a[text()='View']");
 
     $this->webtestVerifyTabularData(
       array(
@@ -355,7 +344,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $this->assertTrue($this->isTextPresent($params['label_a_b']));
   }
 
-  function testAjaxCustomGroupLoad() {
+  public function testAjaxCustomGroupLoad() {
     $this->webtestLogin();
 
     //create a New Individual
@@ -366,14 +355,14 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $triggerElement = array('name' => 'relationship_type_id', 'type' => 'select');
     $customSets = array(
       array('entity' => 'Relationship', 'subEntity' => 'Partner of', 'triggerElement' => $triggerElement),
-      array('entity' => 'Relationship', 'subEntity' => 'Spouse of', 'triggerElement' => $triggerElement)
+      array('entity' => 'Relationship', 'subEntity' => 'Spouse of', 'triggerElement' => $triggerElement),
     );
 
     $pageUrl = array('url' => 'contact/view/rel', 'args' => "cid={$contactId[1]}&action=add&reset=1");
     $this->customFieldSetLoadOnTheFlyCheck($customSets, $pageUrl);
   }
 
-  function testRelationshipAddCurrentEmployerTest() {
+  public function testRelationshipAddCurrentEmployerTest() {
     $this->webtestLogin();
 
     //create a New Individual
@@ -390,11 +379,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     //choose the created relationship type
     $this->waitForElementPresent("relationship_type_id");
     $this->select('relationship_type_id', "label=Employee of");
-
-    // Because it tends to cause problems, all uses of sleep() must be justified in comments
-    // Sleep should never be used for wait for anything to load from the server
-    // Justification for this instance: wait until new contact dialog select is built
-    sleep(2);
+    $this->waitForAjaxContent();
 
     // create a new organization
 
@@ -405,7 +390,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $this->type('organization_name', $orgName);
     $this->type('email-Primary', "info@" . $orgName . ".com");
     $this->click('_qf_Edit_next');
-    $this->waitForText("xpath=//div[@id='s2id_related_contact_id']","$orgName");
+    $this->waitForText("xpath=//div[@id='s2id_related_contact_id']", "$orgName");
 
     //fill in the relationship start date
     $this->webtestFillDate('start_date', '-2 year');
@@ -414,17 +399,15 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
     $description = "Current employee test.";
     $this->type("description", $description);
 
-
     //save the relationship
     //$this->click("_qf_Relationship_upload");
     $this->click('_qf_Relationship_upload-bottom');
-    $this->waitForElementPresent("crm-contact-relationship-selector-current_wrapper");
 
     //check the status message
     $this->waitForText('crm-notification-container', 'Relationship created.');
 
-    $this->waitForElementPresent("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
-    $this->click("xpath=//div[@id='crm-contact-relationship-selector-current_wrapper']//table/tbody//tr/td[9]/span/a[text()='View']");
+    $this->waitForElementPresent("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
+    $this->click("xpath=//div[@class='dataTables_wrapper no-footer']/table/tbody/tr/td[9]//span//a[text()='View']");
 
     $this->webtestVerifyTabularData(
       array(
@@ -433,6 +416,7 @@ class WebTest_Contact_RelationshipAddTest extends CiviSeleniumTestCase {
         'Status' => 'Enabled',
       )
     );
-    $this->assertTrue($this->isTextPresent("Employee of"),"Employee of relationship type not visible on View Relationship page.");
+    $this->assertTrue($this->isTextPresent("Employee of"), "Employee of relationship type not visible on View Relationship page.");
   }
+
 }

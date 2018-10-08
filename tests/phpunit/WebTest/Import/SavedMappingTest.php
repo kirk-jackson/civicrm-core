@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,23 +22,23 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'WebTest/Import/ImportCiviSeleniumTestCase.php';
 
 /**
  * Class WebTest_Import_SavedMapping
  */
-class WebTest_Import_SavedMapping extends ImportCiviSeleniumTestCase {
+class WebTest_Import_SavedMappingTest extends ImportCiviSeleniumTestCase {
 
   protected function setUp() {
     parent::setUp();
   }
 
-  /*
-     * Function to test Saved Import Mapping for Individuals.
-     */
-  function testSaveIndividualMapping() {
+  /**
+   * Test Saved Import Mapping for Individuals.
+   */
+  public function testSaveIndividualMapping() {
 
     // Logging in.
     $this->webtestLogin();
@@ -56,20 +56,22 @@ class WebTest_Import_SavedMapping extends ImportCiviSeleniumTestCase {
 
     // Map Fields
     $fieldMapper = array(
-      'mapper[0][0]' => 'individual_prefix',
-      'mapper[4][0]' => 'individual_suffix',
+      'mapper[0][0]' => 'prefix_id',
+      'mapper[4][0]' => 'suffix_id',
       'mapper[6][0]' => 'phone',
       'mapper[6][1]' => '5',
       'mapper[7][0]' => 'supplemental_address_1',
       'mapper[7][1]' => '5',
       'mapper[8][0]' => 'supplemental_address_2',
       'mapper[8][1]' => '5',
-      'mapper[9][0]' => 'city',
+      'mapper[9][0]' => 'supplemental_address_3',
       'mapper[9][1]' => '5',
-      'mapper[10][0]' => 'state_province',
+      'mapper[10][0]' => 'city',
       'mapper[10][1]' => '5',
-      'mapper[11][0]' => 'country',
+      'mapper[11][0]' => 'state_province',
       'mapper[11][1]' => '5',
+      'mapper[12][0]' => 'country',
+      'mapper[12][1]' => '5',
     );
 
     // Import and check Individual contacts in Skip mode.
@@ -82,13 +84,12 @@ class WebTest_Import_SavedMapping extends ImportCiviSeleniumTestCase {
     $this->importContacts($headers, $rows, 'Individual', 'Skip', array(), $other);
   }
 
-  /*
-     *  Helper function to provide csv data for Individuals contact import.
-     */
   /**
+   * Helper function to provide csv data for Individuals contact import.
+   *
    * @return array
    */
-  function _individualCSVData() {
+  public function _individualCSVData() {
     $headers = array(
       'individual_prefix' => 'Individual Prefix',
       'first_name' => 'First Name',
@@ -117,7 +118,7 @@ class WebTest_Import_SavedMapping extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
       array(
         'individual_prefix' => 'Mr.',
@@ -131,11 +132,11 @@ class WebTest_Import_SavedMapping extends ImportCiviSeleniumTestCase {
         'address_2' => 'Add 2',
         'city' => 'Watson',
         'state' => 'NY',
-        'country' => 'United States',
+        'country' => 'UNITED STATES',
       ),
     );
 
     return array($headers, $rows);
   }
-}
 
+}

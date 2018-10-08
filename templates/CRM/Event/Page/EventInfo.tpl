@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,75 +28,62 @@
 {if $registerClosed }
 <div class="spacer"></div>
 <div class="messages status no-popup">
-  <div class="icon inform-icon"></div>
+  <i class="crm-i fa-info-circle"></i>
      &nbsp;{ts}Registration is closed for this event{/ts}
   </div>
 {/if}
 {if call_user_func(array('CRM_Core_Permission','check'), 'access CiviEvent')}
 <div class="crm-actions-ribbon crm-event-manage-tab-actions-ribbon">
   <ul id="actions">
-{if call_user_func(array('CRM_Core_Permission','check'), 'edit all events')}
+{if call_user_func(array('CRM_Core_Permission','check'), 'edit all events') && !empty($manageEventLinks)}
   <li>
     <div id="crm-event-links-wrapper">
-      <div id="crm-event-configure-link"><span title="{ts}Configure this event.{/ts}"><div
-            class="icon settings-icon"></div></span></div>
+      <span id="crm-event-configure-link" class="crm-hover-button">
+        <span title="{ts}Configure this event.{/ts}" class="crm-i fa-wrench"></span>
+      </span>
       <div class="ac_results" id="crm-event-links-list" style="margin-left: -25px;">
         <div class="crm-event-links-list-inner">
           <ul>
-            <li><a title="{ts}Info and Settings{/ts}"
-                   href="{crmURL p='civicrm/event/manage/settings' q="reset=1&action=update&id=`$event.id`"}">{ts}Info and Settings{/ts}</a>
-            </li>
-            <li><a title="{ts}Location{/ts}"
-                   href="{crmURL p='civicrm/event/manage/location' q="reset=1&action=update&id=`$event.id`"}">{ts}Location{/ts}</a>
-            </li>
-            <li><a title="{ts}Fees{/ts}"
-                   href="{crmURL p='civicrm/event/manage/fee' q="reset=1&action=update&id=`$event.id`"}">{ts}Fees{/ts}</a>
-            </li>
-            <li><a title="{ts}Online Registration{/ts}"
-                   href="{crmURL p='civicrm/event/manage/registration' q="reset=1&action=update&id=`$event.id`"}">{ts}Online Registration{/ts}</a>
-            </li>
-            {if call_user_func(array('CRM_Core_Permission','check'), 'administer CiviCRM') }
-              <li><a title="{ts}11Schedule Reminders{/ts}"
-                     href="{crmURL p='civicrm/event/manage/reminder' q="reset=1&action=update&id=`$event.id`"}">{ts}Schedule Reminders{/ts}</a>
+            {foreach from=$manageEventLinks item='link'}
+              <li>
+                {* Schedule Reminders requires a different query string. *}
+                {if $link.url EQ 'civicrm/event/manage/reminder'}
+                  <a href="{crmURL p=$link.url q="reset=1&action=browse&setTab=1&id=`$event.id`" fb=1}">{$link.title}</a>
+                {else}
+                  <a href="{crmURL p=$link.url q="reset=1&action=update&id=`$event.id`" fb=1}">{$link.title}</a>
+                {/if}
               </li>
-            {/if}
-            {if $eventCartEnabled}
-              <li><a title="{ts}Conference Slots{/ts}"
-                     href="{crmURL p='civicrm/event/manage/conference' q="reset=1&action=update&id=`$event.id`"}">{ts}Conference Slots{/ts}</a>
-              </li>
-            {/if}
-            <li><a title="{ts}Tell a Friend{/ts}"
-                   href="{crmURL p='civicrm/event/manage/friend' q="reset=1&action=update&id=`$event.id`"}">{ts}Tell a Friend{/ts}</a>
-            </li>
-            <li><a title="{ts}Personal Campaign Pages{/ts}"
-                   href="{crmURL p='civicrm/event/manage/pcp' q="reset=1&action=update&id=`$event.id`"}">{ts}Personal Campaign Pages{/ts}</a>
-            </li>
+            {/foreach}
           </ul>
         </div>
       </div>
     </div>
   </li>
 {/if}
-<li><div id="crm-participant-wrapper">
-        <div id="crm-participant-links"><span title="{ts}Participant listing links.{/ts}"><div class="icon search-icon"></div></div>
-        <div class="ac_results" id="crm-participant-list" style="margin-left: -25px;">
-             <div class="crm-participant-list-inner">
-               <ul>
-                    {if $findParticipants.statusCounted}
-                <li><a class="crm-participant-counted" href="{crmURL p='civicrm/event/search' q="reset=1&force=1&event=`$event.id`&status=true"}">{$findParticipants.statusCounted|replace:'/':', '}</a></li>
-              {/if}
+  <li>
+    <div id="crm-participant-wrapper">
+      <span id="crm-participant-links" class="crm-hover-button">
+        <span title="{ts}Participant listing links.{/ts}" class="crm-i fa-search"></span>
+      </span>
+      <div class="ac_results" id="crm-participant-list" style="margin-left: -25px;">
+        <div class="crm-participant-list-inner">
+          <ul>
+            {if $findParticipants.statusCounted}
+              <li><a class="crm-participant-counted" href="{crmURL p='civicrm/event/search' q="reset=1&force=1&event=`$event.id`&status=true" fb=1}"><b>{ts}List counted participants{/ts}</b> ({$findParticipants.statusCounted|replace:'/':', '})</a></li>
+            {/if}
 
-                {if $findParticipants.statusNotCounted}
-            <li><a class="crm-participant-not-counted" href="{crmURL p='civicrm/event/search' q="reset=1&force=1&event=`$event.id`&status=false"}">{$findParticipants.statusNotCounted|replace:'/':', '}</a>
-            </li>
-              {/if}
-                {if $participantListingURL}
-                <li><a class="crm-participant-listing" href="{$participantListingURL}">{ts}Public Participant Listing{/ts}</a></li>
-              {/if}
-            </ul>
-             </div>
+            {if $findParticipants.statusNotCounted}
+              <li><a class="crm-participant-not-counted" href="{crmURL p='civicrm/event/search' q="reset=1&force=1&event=`$event.id`&status=false" fb=1}"><b>{ts}List uncounted participants{/ts}</b> ({$findParticipants.statusNotCounted|replace:'/':', '})</a>
+              </li>
+            {/if}
+            {if $participantListingURL}
+              <li><a class="crm-participant-listing" href="{$participantListingURL}">{ts}Public Participant Listing{/ts}</a></li>
+            {/if}
+          </ul>
         </div>
-      </div></li>
+      </div>
+    </div>
+  </li>
   </ul>
   <div class="clear"></div>
 </div>
@@ -109,7 +96,7 @@
       {crmRegion name="event-page-eventinfo-actionlinks-top"}
         {if $allowRegistration}
           <div class="action-link section register_link-section register_link-top">
-            <a href="{$registerURL}" title="{$registerText}" class="button crm-register-button"><span>{$registerText}</span></a>
+            <a href="{$registerURL}" title="{$registerText|escape:'html'}" class="button crm-register-button"><span>{$registerText}</span></a>
           </div>
         {/if}
       {/crmRegion}
@@ -128,7 +115,7 @@
   {/if}
   <div class="clear"></div>
   <div class="crm-section event_date_time-section">
-      <div class="label"><label>{ts}When{/ts}</label></div>
+      <div class="label">{ts}When{/ts}</div>
       <div class="content">
             <abbr class="dtstart" title="{$event.event_start_date|crmDate}">
             {$event.event_start_date|crmDate}</abbr>
@@ -153,7 +140,7 @@
 
         {if $location.address.1}
             <div class="crm-section event_address-section">
-                <div class="label"><label>{ts}Location{/ts}</label></div>
+                <div class="label">{ts}Location{/ts}</div>
                 <div class="content">{$location.address.1.display|nl2br}</div>
                 <div class="clear"></div>
             </div>
@@ -161,7 +148,7 @@
 
       {if ( $event.is_map && $config->mapProvider &&
           ( is_numeric($location.address.1.geo_code_1)  ||
-          ( $config->mapGeoCoding && $location.address.1.city AND $location.address.1.state_province ) ) ) }
+          ( $location.address.1.city AND $location.address.1.state_province ) ) ) }
           <div class="crm-section event_map-section">
               <div class="content">
                     {assign var=showDirectly value="1"}
@@ -177,12 +164,12 @@
 
   {if $location.phone.1.phone || $location.email.1.email}
       <div class="crm-section event_contact-section">
-          <div class="label"><label>{ts}Contact{/ts}</label></div>
+          <div class="label">{ts}Contact{/ts}</div>
           <div class="content">
               {* loop on any phones and emails for this event *}
               {foreach from=$location.phone item=phone}
                   {if $phone.phone}
-                      {if $phone.phone_type}{$phone.phone_type_display}{else}{ts}Phone{/ts}{/if}:
+                      {if $phone.phone_type_id}{$phone.phone_type_display}{else}{ts}Phone{/ts}{/if}:
                           <span class="tel">{$phone.phone} {if $phone.phone_ext}&nbsp;{ts}ext.{/ts} {$phone.phone_ext}{/if} </span> <br />
                       {/if}
               {/foreach}
@@ -199,7 +186,7 @@
 
   {if $event.is_monetary eq 1 && $feeBlock.value}
       <div class="crm-section event_fees-section">
-          <div class="label"><label>{$event.fee_label}</label></div>
+          <div class="label">{$event.fee_label}</div>
           <div class="content">
               <table class="form-layout-compressed fee_block-table">
                   {foreach from=$feeBlock.value name=fees item=value}
@@ -216,7 +203,13 @@
                       <tr>
                           <td class="{$lClass} crm-event-label">{$feeBlock.label.$idx}</td>
                           {if $isPriceSet & $feeBlock.isDisplayAmount.$idx}
-                          <td class="fee_amount-value right">{$feeBlock.value.$idx|crmMoney}</td>
+            <td class="fee_amount-value right">
+                              {if isset($feeBlock.tax_amount.$idx)}
+          {$feeBlock.value.$idx}
+                              {else}
+                {$feeBlock.value.$idx|crmMoney}
+                              {/if}
+            </td>
                           {/if}
                       </tr>
                       {/if}
@@ -234,12 +227,12 @@
       {crmRegion name="event-page-eventinfo-actionlinks-bottom"}
         {if $allowRegistration}
           <div class="action-link section register_link-section register_link-bottom">
-            <a href="{$registerURL}" title="{$registerText}" class="button crm-register-button"><span>{$registerText}</span></a>
+            <a href="{$registerURL}" title="{$registerText|escape:'html'}" class="button crm-register-button"><span>{$registerText}</span></a>
           </div>
         {/if}
       {/crmRegion}
     </div>
-    { if $event.is_public }
+    {if $event.is_public }
         <br />{include file="CRM/Event/Page/iCalLinks.tpl"}
     {/if}
 

@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,20 +23,15 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 require_once 'Mail/mime.php';
-
-require_once 'ezc/Base/src/ezc_bootstrap.php';
-require_once 'ezc/autoload/mail_autoload.php';
 
 /**
  * Class CRM_Mailing_Event_BAO_Reply
@@ -44,28 +39,29 @@ require_once 'ezc/autoload/mail_autoload.php';
 class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
 
   /**
-   * class constructor
+   * Class constructor.
    */
-  function __construct() {
+  public function __construct() {
     parent::__construct();
   }
 
   /**
    * Register a reply event.
    *
-   * @param int $job_id The job ID of the reply
-   * @param int $queue_id The queue event id
-   * @param string $hash The hash
+   * @param int $job_id
+   *   The job ID of the reply.
+   * @param int $queue_id
+   *   The queue event id.
+   * @param string $hash
+   *   The hash.
    *
    * @param null $replyto
    *
-   * @return object|null      The mailing object, or null on failure
-   * @access public
-   * @static
+   * @return object|null
+   *   The mailing object, or null on failure
    */
   public static function &reply($job_id, $queue_id, $hash, $replyto = NULL) {
-    /* First make sure there's a matching queue event */
-
+    // First make sure there's a matching queue event.
     $q = CRM_Mailing_Event_BAO_Queue::verify($job_id, $queue_id, $hash);
 
     $success = NULL;
@@ -101,24 +97,28 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
   }
 
   /**
-   * Forward a mailing reply
+   * Forward a mailing reply.
    *
-   * @param int $queue_id     Queue event ID of the sender
-   * @param string $mailing   The mailing object
-   * @param string $bodyTxt   text part of the body (ignored if $fullEmail provided)
-   * @param string $replyto   Reply-to of the incoming message
-   * @param string $bodyHTML  HTML part of the body (ignored if $fullEmail provided)
-   * @param string $fullEmail whole email to forward in one string
-   *
-   * @return void
-   * @access public
-   * @static
+   * @param int $queue_id
+   *   Queue event ID of the sender.
+   * @param string $mailing
+   *   The mailing object.
+   * @param string $bodyTxt
+   *   Text part of the body (ignored if $fullEmail provided).
+   * @param string $replyto
+   *   Reply-to of the incoming message.
+   * @param string $bodyHTML
+   *   HTML part of the body (ignored if $fullEmail provided).
+   * @param string $fullEmail
+   *   Whole email to forward in one string.
    */
   public static function send($queue_id, &$mailing, &$bodyTxt, $replyto, &$bodyHTML = NULL, &$fullEmail = NULL) {
     $domain = CRM_Core_BAO_Domain::getDomain();
     $emails = CRM_Core_BAO_Email::getTableName();
     $queue = CRM_Mailing_Event_BAO_Queue::getTableName();
     $contacts = CRM_Contact_BAO_Contact::getTableName();
+    $domain_id = CRM_Core_Config::domainID();
+    $domainValues = civicrm_api3('Domain', 'get', array('sequential' => 1, 'id' => $domain_id));
 
     $eq = new CRM_Core_DAO();
     $eq->query("SELECT     $contacts.display_name as display_name,
@@ -136,7 +136,7 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
 
     if ($fullEmail) {
       // parse the email and set a new destination
-      $parser = new ezcMailParser;
+      $parser = new ezcMailParser();
       $set = new ezcMailVariableSet($fullEmail);
       $parsed = array_shift($parser->parseMail($set));
       $parsed->to = array(new ezcMailAddress($mailing->replyto_email));
@@ -144,6 +144,11 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
       // CRM-5567: we need to set Reply-To: so that any response
       // to the forward goes to the sender of the reply
       $parsed->setHeader('Reply-To', $replyto instanceof ezcMailAddress ? $replyto : $parsed->from->__toString());
+
+      // CRM-17754 Include re-sent headers to indicate that we have forwarded on the email
+      $domainEmail = $domainValues['values'][0]['from_email'];
+      $parsed->setHeader('Resent-From', $domainEmail);
+      $parsed->setHeader('Resent-Date', date('r'));
 
       // $h must be an array, so we can't use generateHeaders()'s result,
       // but we have to regenerate the headers because we changed To
@@ -168,8 +173,6 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
       }
     }
     else {
-      $emailDomain = CRM_Core_BAO_MailSettings::defaultDomain();
-
       if (empty($eq->display_name)) {
         $from = $eq->email;
       }
@@ -184,7 +187,10 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
         'To' => $mailing->replyto_email,
         'From' => $from,
         'Reply-To' => empty($replyto) ? $eq->email : $replyto,
-        'Return-Path' => "do-not-reply@{$emailDomain}",
+        'Return-Path' => CRM_Core_BAO_Domain::getNoReplyEmailAddress(),
+        // CRM-17754 Include re-sent headers to indicate that we have forwarded on the email
+        'Resent-From' => $domainValues['values'][0]['from_email'],
+        'Resent-Date' => date('r'),
       );
 
       $message->setTxtBody($bodyTxt);
@@ -195,7 +201,7 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
 
     CRM_Mailing_BAO_Mailing::addMessageIdHeader($h, 'r', $eq->job_id, $queue_id, $eq->hash);
     $config = CRM_Core_Config::singleton();
-    $mailer = $config->getMailer();
+    $mailer = \Civi::service('pear_mail');
 
     if (is_object($mailer)) {
       $errorScope = CRM_Core_TemporaryErrorScope::ignoreException();
@@ -205,15 +211,14 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
   }
 
   /**
-   * Send an automated response
+   * Send an automated response.
    *
-   * @param object $mailing       The mailing object
-   * @param int $queue_id         The queue ID
-   * @param string $replyto       Optional reply-to from the reply
-   *
-   * @return void
-   * @access private
-   * @static
+   * @param object $mailing
+   *   The mailing object.
+   * @param int $queue_id
+   *   The queue ID.
+   * @param string $replyto
+   *   Optional reply-to from the reply.
    */
   private static function autoRespond(&$mailing, $queue_id, $replyto) {
     $config = CRM_Core_Config::singleton();
@@ -237,7 +242,7 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
 
     $to = empty($replyto) ? $eq->email : $replyto;
 
-    $component = new CRM_Mailing_BAO_Component();
+    $component = new CRM_Mailing_BAO_MailingComponent();
     $component->id = $mailing->reply_id;
     $component->find(TRUE);
 
@@ -246,18 +251,15 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
     $domain = CRM_Core_BAO_Domain::getDomain();
     list($domainEmailName, $_) = CRM_Core_BAO_Domain::getNameAndEmail();
 
-    $emailDomain = CRM_Core_BAO_MailSettings::defaultDomain();
-
     $headers = array(
       'Subject' => $component->subject,
       'To' => $to,
-      'From' => "\"$domainEmailName\" <do-not-reply@$emailDomain>",
-      'Reply-To' => "do-not-reply@$emailDomain",
-      'Return-Path' => "do-not-reply@$emailDomain",
+      'From' => "\"$domainEmailName\" <" . CRM_Core_BAO_Domain::getNoReplyEmailAddress() . '>',
+      'Reply-To' => CRM_Core_BAO_Domain::getNoReplyEmailAddress(),
+      'Return-Path' => CRM_Core_BAO_Domain::getNoReplyEmailAddress(),
     );
 
-    /* TODO: do we need reply tokens? */
-
+    // TODO: do we need reply tokens?
     $html = $component->body_html;
     if ($component->body_text) {
       $text = $component->body_text;
@@ -286,7 +288,7 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
     $h = $message->headers($headers);
     CRM_Mailing_BAO_Mailing::addMessageIdHeader($h, 'a', $eq->job_id, queue_id, $eq->hash);
 
-    $mailer = $config->getMailer();
+    $mailer = \Civi::service('pear_mail');
     if (is_object($mailer)) {
       $errorScope = CRM_Core_TemporaryErrorScope::ignoreException();
       $mailer->send($to, $h, $b);
@@ -295,17 +297,20 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
   }
 
   /**
-   * Get row count for the event selector
+   * Get row count for the event selector.
    *
-   * @param int $mailing_id       ID of the mailing
-   * @param int $job_id           Optional ID of a job to filter on
-   * @param boolean $is_distinct  Group by queue ID?
+   * @param int $mailing_id
+   *   ID of the mailing.
+   * @param int $job_id
+   *   Optional ID of a job to filter on.
+   * @param bool $is_distinct
+   *   Group by queue ID?.
    *
-   * @return int                  Number of rows in result set
-   * @access public
-   * @static
+   * @return int
+   *   Number of rows in result set
    */
-  public static function getTotalCount($mailing_id, $job_id = NULL,
+  public static function getTotalCount(
+    $mailing_id, $job_id = NULL,
     $is_distinct = FALSE
   ) {
     $dao = new CRM_Core_DAO();
@@ -346,20 +351,26 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
   }
 
   /**
-   * Get rows for the event browser
+   * Get rows for the event browser.
    *
-   * @param int $mailing_id       ID of the mailing
-   * @param int $job_id           optional ID of the job
-   * @param boolean $is_distinct  Group by queue id?
-   * @param int $offset           Offset
-   * @param int $rowCount         Number of rows
-   * @param array $sort           sort array
+   * @param int $mailing_id
+   *   ID of the mailing.
+   * @param int $job_id
+   *   Optional ID of the job.
+   * @param bool $is_distinct
+   *   Group by queue id?.
+   * @param int $offset
+   *   Offset.
+   * @param int $rowCount
+   *   Number of rows.
+   * @param array $sort
+   *   Sort array.
    *
-   * @return array                Result set
-   * @access public
-   * @static
+   * @return array
+   *   Result set
    */
-  public static function &getRows($mailing_id, $job_id = NULL,
+  public static function &getRows(
+    $mailing_id, $job_id = NULL,
     $is_distinct = FALSE, $offset = NULL, $rowCount = NULL, $sort = NULL
   ) {
 
@@ -396,7 +407,7 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
     }
 
     if ($is_distinct) {
-      $query .= " GROUP BY $queue.id ";
+      $query .= " GROUP BY $queue.id, $contact.id, $reply.time_stamp ";
     }
 
     $orderBy = "sort_name ASC, {$reply}.time_stamp DESC";
@@ -433,5 +444,5 @@ class CRM_Mailing_Event_BAO_Reply extends CRM_Mailing_Event_DAO_Reply {
     }
     return $results;
   }
-}
 
+}

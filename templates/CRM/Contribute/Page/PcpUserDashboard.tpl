@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,6 +23,8 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
+{crmRegion name="crm-contribute-pcp-userdashboard-pre"}
+{/crmRegion}
 <div class="view-content">
 
 {if $pcpInfo}
@@ -35,7 +37,7 @@
     <th>{ts}In Support of{/ts}</th>
     <th>{ts}Campaign Ends{/ts}</th>
     <th>{ts}Status{/ts}</th>
-    <th></th>
+    {if !$userChecksum} <th></th> {/if}
   </tr>
 
   {foreach from=$pcpInfo item=row}
@@ -44,7 +46,9 @@
         <td>{$row.pageTitle}</td>
         <td>{if $row.end_date}{$row.end_date|truncate:10:''|crmDate}{else}({ts}ongoing{/ts}){/if}</td>
         <td>{$row.pcpStatus}</td>
-        <td>{$row.action|replace:'xx':$row.pcpId}</td>
+        {if !$userChecksum}
+          <td>{$row.action|replace:'xx':$row.pcpId}</td>
+        {/if}
   </tr>
   {/foreach}
 </table>
@@ -56,7 +60,6 @@
   {ts}You do not have any active Personal Campaign pages.{/ts}
 </div>
 {/if}
-
 
 {if $pcpBlock}
 {strip}
@@ -77,7 +80,7 @@
 
   {foreach from=$pcpBlock item=row}
   <tr class="{cycle values="odd-row,even-row"}">
-    <td><a href="{crmURL p='civicrm/contribute/transact' q="id=`$row.pageId`&reset=1"}" title="{ts}View campaign page{/ts}">{$row.pageTitle}</a></td>
+    <td>{if $row.component eq 'contribute'}<a href="{crmURL p='civicrm/contribute/transact' q="id=`$row.pageId`&reset=1"}" title="{ts}View campaign page{/ts}">{else}<a href="{crmURL p='civicrm/event/register' q="id=`$row.pageId`&reset=1"}" title="{ts}View campaign page{/ts}">{/if}{$row.pageTitle}</a></td>
         <td>{if $row.end_date}{$row.end_date|truncate:10:''|crmDate}{else}({ts}ongoing{/ts}){/if}</td>
     <td>{$row.action|replace:'xx':$row.pageId}</td>
   </tr>
@@ -88,3 +91,5 @@
 {/if}
 
 </div>
+{crmRegion name="crm-contribute-pcp-userdashboard-post"}
+{/crmRegion}

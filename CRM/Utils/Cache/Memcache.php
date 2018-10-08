@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,37 +23,43 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
-class CRM_Utils_Cache_Memcache {
-  const DEFAULT_HOST    = 'localhost';
-  const DEFAULT_PORT    = 11211;
+class CRM_Utils_Cache_Memcache implements CRM_Utils_Cache_Interface {
+
+  use CRM_Utils_Cache_NaiveMultipleTrait; // TODO Consider native implementation.
+
+  const DEFAULT_HOST = 'localhost';
+  const DEFAULT_PORT = 11211;
   const DEFAULT_TIMEOUT = 3600;
-  const DEFAULT_PREFIX  = '';
+  const DEFAULT_PREFIX = '';
 
   /**
-   * The host name of the memcached server
+   * If another process clears namespace, we'll find out in ~5 sec.
+   */
+  const NS_LOCAL_TTL = 5;
+
+  /**
+   * The host name of the memcached server.
    *
    * @var string
    */
   protected $_host = self::DEFAULT_HOST;
 
   /**
-   * The port on which to connect on
+   * The port on which to connect on.
    *
    * @var int
    */
   protected $_port = self::DEFAULT_PORT;
 
   /**
-   * The default timeout to use
+   * The default timeout to use.
    *
    * @var int
    */
@@ -71,20 +77,30 @@ class CRM_Utils_Cache_Memcache {
   protected $_prefix = self::DEFAULT_PREFIX;
 
   /**
-   * The actual memcache object
+   * The actual memcache object.
    *
-   * @var resource
+   * @var Memcache
    */
   protected $_cache;
 
   /**
-   * Constructor
+   * @var NULL|array
    *
-   * @param array $config an array of configuration params
+   * This is the effective prefix. It may be bumped up whenever the dataset is flushed.
+   *
+   * @see https://github.com/memcached/memcached/wiki/ProgrammingTricks#deleting-by-namespace
+   */
+  protected $_truePrefix = NULL;
+
+  /**
+   * Constructor.
+   *
+   * @param array $config
+   *   An array of configuration params.
    *
    * @return \CRM_Utils_Cache_Memcache
    */
-  function __construct($config) {
+  public function __construct($config) {
     if (isset($config['host'])) {
       $this->_host = $config['host'];
     }
@@ -110,40 +126,82 @@ class CRM_Utils_Cache_Memcache {
   /**
    * @param $key
    * @param $value
+   * @param null|int|\DateInterval $ttl
    *
    * @return bool
    */
-  function set($key, &$value) {
-    if (!$this->_cache->set($this->_prefix . $key, $value, FALSE, $this->_timeout)) {
-      return FALSE;
+  public function set($key, $value, $ttl = NULL) {
+    CRM_Utils_Cache::assertValidKey($key);
+    if (is_int($ttl) && $ttl <= 0) {
+      return $this->delete($key);
     }
+    $expires = CRM_Utils_Date::convertCacheTtlToExpires($ttl, $this->_timeout);
+    return $this->_cache->set($this->getTruePrefix() . $key, serialize($value), FALSE, $expires);
+  }
+
+  /**
+   * @param $key
+   * @param mixed $default
+   *
+   * @return mixed
+   */
+  public function get($key, $default = NULL) {
+    CRM_Utils_Cache::assertValidKey($key);
+    $result = $this->_cache->get($this->getTruePrefix() . $key);
+    return ($result === FALSE) ? $default : unserialize($result);
+  }
+
+  /**
+   * @param string $key
+   *
+   * @return bool
+   * @throws \Psr\SimpleCache\CacheException
+   */
+  public function has($key) {
+    CRM_Utils_Cache::assertValidKey($key);
+    $result = $this->_cache->get($this->getTruePrefix() . $key);
+    return ($result !== FALSE);
+  }
+
+
+  /**
+   * @param $key
+   *
+   * @return bool
+   */
+  public function delete($key) {
+    CRM_Utils_Cache::assertValidKey($key);
+    $this->_cache->delete($this->getTruePrefix() . $key);
     return TRUE;
   }
 
   /**
-   * @param $key
-   *
-   * @return mixed
+   * @return bool
    */
-  function &get($key) {
-    $result = $this->_cache->get($this->_prefix . $key);
-    return $result;
+  public function flush() {
+    $this->_truePrefix = NULL;
+    $this->_cache->delete($this->_prefix);
+    return TRUE;
   }
 
-  /**
-   * @param $key
-   *
-   * @return mixed
-   */
-  function delete($key) {
-    return $this->_cache->delete($this->_prefix . $key);
+  public function clear() {
+    return $this->flush();
   }
 
-  /**
-   * @return mixed
-   */
-  function flush() {
-    return $this->_cache->flush();
+  protected function getTruePrefix() {
+    if ($this->_truePrefix === NULL || $this->_truePrefix['expires'] < time()) {
+      $key = $this->_prefix;
+      $value = $this->_cache->get($key);
+      if ($value === FALSE) {
+        $value = uniqid();
+        $this->_cache->set($key, $value, FALSE, 0); // Indefinite.
+      }
+      $this->_truePrefix = [
+        'value' => $value,
+        'expires' => time() + self::NS_LOCAL_TTL,
+      ];
+    }
+    return $this->_prefix . $this->_truePrefix['value'] . '/';
   }
+
 }
-

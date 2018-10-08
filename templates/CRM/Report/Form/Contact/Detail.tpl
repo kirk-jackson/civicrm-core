@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -96,11 +96,11 @@
                                     {assign var=fieldLink value=$field|cat:"_link"}
                                     {assign var=fieldHover value=$field|cat:"_hover"}
                                     <td  class="report-contents crm-report_{$field}">
-                                        {if $row.$fieldLink}<a title="{$row.$fieldHover}" href="{$row.$fieldLink}">{/if}
+                                        {if $row.$fieldLink}<a title="{$row.$fieldHover|escape}" href="{$row.$fieldLink}">{/if}
 
                                         {if $row.$field eq 'Subtotal'}
                                             {$row.$field}
-                                        {elseif $header.type eq 12}
+                                        {elseif $header.type eq 12 || $header.type eq 4}
                                             {if $header.group_by eq 'MONTH' or $header.group_by eq 'QUARTER'}
                                                 {$row.$field|crmDate:$config->dateformatPartial}
                                             {elseif $header.group_by eq 'YEAR'}
@@ -142,7 +142,7 @@
                                                 {assign var=fieldHover value=$field|cat:"_hover"}
                               <td class="report-contents crm-report_{$field}">
                                   {if $row.$fieldLink}
-                                <a title="{$row.$fieldHover} "href="{$row.$fieldLink}">
+                                <a title="{$row.$fieldHover|escape}" href="{$row.$fieldLink}">
                                   {/if}
 
                                   {if $row.$field eq 'Sub Total'}

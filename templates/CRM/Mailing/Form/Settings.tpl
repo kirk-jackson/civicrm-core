@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -29,18 +29,18 @@
 
 CRM.$(function($) {
   // hide all the selects that contains only one option
-  cj('.crm-message-select select').each(function (){
-    if (cj(this).find('option').size() == 1) {
-      cj(this).parent().parent().hide();
+  $('.crm-message-select select').each(function (){
+    if ($(this).find('option').size() == 1) {
+      $(this).parent().parent().hide();
     }
   });
-  if (!cj('#override_verp').prop('checked')){
-    cj('.crm-mailing-settings-form-block-forward_replies,.crm-mailing-settings-form-block-auto_responder').hide();
+  if (!$('#override_verp').prop('checked')){
+    $('.crm-mailing-settings-form-block-forward_replies,.crm-mailing-settings-form-block-auto_responder').hide();
   }
-  cj('#override_verp').click(function(){
-      cj('.crm-mailing-settings-form-block-forward_replies,.crm-mailing-settings-form-block-auto_responder').toggle();
-       if (!cj('#override_verp').prop('checked')) {
-             cj('#forward_replies, #auto_responder').prop('checked', false);
+  $('#override_verp').click(function(){
+      $('.crm-mailing-settings-form-block-forward_replies,.crm-mailing-settings-form-block-auto_responder').toggle();
+       if (!$('#override_verp').prop('checked')) {
+             $('#forward_replies, #auto_responder').prop('checked', false);
            }
     });
 
@@ -50,7 +50,7 @@ CRM.$(function($) {
 
 <div class="crm-block crm-form-block crm-mailing-settings-form-block">
 {include file="CRM/common/WizardHeader.tpl"}
-<div id="help">
+<div class="help">
     {ts}These settings control tracking and responses to recipient actions. The number of recipients selected to receive this mailing is shown in the box to the right. If this count doesn't match your expectations, click <strong>Previous</strong> to review your selection(s).{/ts}
 </div>
 {include file="CRM/Mailing/Form/Count.tpl"}
@@ -59,7 +59,10 @@ CRM.$(function($) {
     <table class="form-layout"><tr class="crm-mailing-settings-form-block-url_tracking">
     <td class="label">{$form.url_tracking.label}</td>
         <td>{$form.url_tracking.html}
-            <span class="description">{ts}Track the number of times recipients click each link in this mailing. NOTE: When this feature is enabled, all links in the message body will be automaticallly re-written to route through your CiviCRM server prior to redirecting to the target page.{/ts}</span>
+            <span class="description">
+              {ts}Track the number of times recipients click each link in this mailing.{/ts}
+              {ts}NOTE: When this feature is enabled, all links in the message body will be automatically re-written to route through your CiviCRM server prior to redirecting to the target page.{/ts}
+            </span>
         </td></tr><tr class="crm-mailing-settings-form-block-open_tracking">
     <td class="label">{$form.open_tracking.label}</td>
         <td>{$form.open_tracking.html}

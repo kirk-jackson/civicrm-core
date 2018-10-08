@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,31 +23,19 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
-
-
-require_once 'CiviTest/CiviUnitTestCase.php';
+ */
 
 /**
  * Class CRM_Core_BAO_PreferencesTest
+ * @group headless
  */
 class CRM_Core_BAO_PreferencesTest extends CiviUnitTestCase {
-  /**
-   * @return array
-   */
-  function get_info() {
-    return array(
-      'name' => 'Preference BAO',
-      'description' => 'Test set/get on preference variables.',
-      'group' => 'CiviCRM BAO Tests',
-    );
-  }
 
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
-  function testValueOptions() {
+  public function testValueOptions() {
 
     $addressOptions = CRM_Core_BAO_Setting::valueOptions(CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
       'address_options'
@@ -58,7 +46,7 @@ class CRM_Core_BAO_PreferencesTest extends CiviUnitTestCase {
     $this->assertEquals($addressOptions['country'], 1, 'Country is not set in address options');
   }
 
-  function testSetValueOptions() {
+  public function testSetValueOptions() {
     $addressOptions = CRM_Core_BAO_Setting::valueOptions(CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
       'address_options'
     );
@@ -73,5 +61,5 @@ class CRM_Core_BAO_PreferencesTest extends CiviUnitTestCase {
 
     $this->assertEquals($addressOptions['county'], 1, 'County was set but did not stick in db');
   }
-}
 
+}

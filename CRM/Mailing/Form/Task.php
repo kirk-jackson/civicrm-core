@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,60 +23,31 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * This class generates form components for relationship
- *
+ * Class for mailing form task actions.
+ * FIXME: This needs refactoring to properly inherit from CRM_Core_Form_Task and share more functions.
  */
-class CRM_Mailing_Form_Task extends CRM_Core_Form {
+class CRM_Mailing_Form_Task extends CRM_Core_Form_Task {
 
   /**
-   * the task being performed
-   *
-   * @var int
+   * Build all the data structures needed to build the form.
    */
-  protected $_task;
-
-  /**
-   * The additional clause that we restrict the search with
-   *
-   * @var string
-   */
-  protected $_componentClause = NULL;
-
-  /**
-   * The array that holds all the component ids
-   *
-   * @var array
-   */
-  protected $_componentIds;
-
-  /**
-   * build all the data structures needed to build the form
-   *
-   * @param
-   *
-   * @return void
-   * @access public
-   */
-  function preProcess() {
+  public function preProcess() {
     self::preProcessCommon($this);
   }
 
   /**
-   * @param $form
-   * @param bool $useTable
+   * @param CRM_Core_Form $form
    */
-  static function preProcessCommon(&$form, $useTable = FALSE) {
+  public static function preProcessCommon(&$form) {
     $values = $form->controller->exportValues($form->get('searchFormName'));
 
     $form->_task = CRM_Utils_Array::value('task', $values);
@@ -94,9 +65,9 @@ class CRM_Mailing_Form_Task extends CRM_Core_Form {
     }
     else {
       $queryParams = $form->get('queryParams');
-      $sortOrder = null;
-      if ( $form->get( CRM_Utils_Sort::SORT_ORDER  ) ) {
-        $sortOrder = $form->get( CRM_Utils_Sort::SORT_ORDER );
+      $sortOrder = NULL;
+      if ($form->get(CRM_Utils_Sort::SORT_ORDER)) {
+        $sortOrder = $form->get(CRM_Utils_Sort::SORT_ORDER);
       }
 
       $query = new CRM_Contact_BAO_Query($queryParams, NULL, NULL, FALSE, FALSE,
@@ -111,10 +82,10 @@ class CRM_Mailing_Form_Task extends CRM_Core_Form {
     }
 
     if (!empty($ids)) {
-      $form->_componentClause =  ' civicrm_mailing_recipients.id IN ( ' . implode(',', $ids) . ' ) ';
+      $form->_componentClause = ' civicrm_mailing_recipients.id IN ( ' . implode(',', $ids) . ' ) ';
     }
 
-    //set the context for redirection for any task actions
+    // set the context for redirection for any task actions
     $session = CRM_Core_Session::singleton();
 
     $fragment = 'search';
@@ -134,20 +105,16 @@ class CRM_Mailing_Form_Task extends CRM_Core_Form {
   }
 
   /**
-   * simple shell that derived classes can call to add buttons to
+   * Simple shell that derived classes can call to add buttons to
    * the form with a customized title for the main Submit
    *
-   * @param string $title title of the main button
+   * @param string $title
+   *   Title of the main button.
    * @param string $nextType
    * @param string $backType
    * @param bool $submitOnce
-   *
-   * @internal param string $type button type for the form after processing
-   *
-   * @return void
-   * @access public
    */
-  function addDefaultButtons($title, $nextType = 'next', $backType = 'back', $submitOnce = FALSE) {
+  public function addDefaultButtons($title, $nextType = 'next', $backType = 'back', $submitOnce = FALSE) {
     $this->addButtons(array(
         array(
           'type' => $nextType,
@@ -161,4 +128,5 @@ class CRM_Mailing_Form_Task extends CRM_Core_Form {
       )
     );
   }
+
 }

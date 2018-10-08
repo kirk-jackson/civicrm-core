@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 
@@ -35,7 +35,7 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
     parent::setUp();
   }
 
-  function testCreateCampaign() {
+  public function testCreateCampaign() {
     $this->webtestLogin('admin');
 
     // Create new group
@@ -81,7 +81,7 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
 
     $this->openCiviPage("campaign", "reset=1", "link=Add Campaign");
 
-    if ($this->isTextPresent('No campaigns found.')) {
+    if ($this->isTextPresent('None found.')) {
       $this->openCiviPage("participant/add", "reset=1&action=add&context=standalone", "_qf_Participant_upload-bottom");
       $this->assertTrue($this->isTextPresent('There are currently no active Campaigns.'));
     }
@@ -97,9 +97,8 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
     $this->type("description", "This is a test campaign");
 
     // include groups for the campaign
-    $this->addSelection("includeGroups-f", "label=$groupName");
-    $this->click("//option[@value=4]");
-    $this->click("add");
+    $this->waitForAjaxContent();
+    $this->multiselect2("includeGroups", array("$groupName", "Advisory Board"));
 
     // fill the end date for campaign
     $this->webtestFillDate("end_date", "+1 year");
@@ -115,17 +114,17 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
       "Status message didn't show up after saving campaign!"
     );
 
-    $this->waitForElementPresent("//div[@id='campaignList']/div[@id='campaigns_wrapper']/table/tbody/tr/td[text()='{$campaignTitle}']/../td[1]");
-    $id = (int) $this->getText("//div[@id='campaignList']/div[@id='campaigns_wrapper']/table/tbody/tr/td[text()='{$campaignTitle}']/../td[1]");
+    $this->waitForElementPresent("//div[@id='campaignList']/div/table/tbody/tr/td[3]/div[text()='{$campaignTitle}']/../../td[1]");
+    $id = (int) $this->getText("//div[@id='campaignList']/div/table/tbody/tr/td[3]/div[text()='{$campaignTitle}']/../../td[1]");
 
     $this->offlineParticipantAddTest($campaignTitle, $id);
   }
 
   /**
    * @param $campaignTitle
-   * @param $id
+   * @param int $id
    */
-  function offlineParticipantAddTest($campaignTitle, $id) {
+  public function offlineParticipantAddTest($campaignTitle, $id) {
     // connect campaign with event
     $this->openCiviPage("event/manage", "reset=1");
     $eventId = $this->registerUrl();
@@ -137,8 +136,7 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
     $this->click("campaign_id");
     $this->select("campaign_id", "value=$id");
     $this->waitForElementPresent('_qf_EventInfo_upload_done-bottom');
-    $this->click("_qf_EventInfo_upload_done-bottom");
-    $this->waitForPageToLoad($this->getTimeoutMsec());
+    $this->clickLink("_qf_EventInfo_upload_done-bottom");
 
     // Adding contact with randomized first name (so we can then select that contact when creating event registration)
     // We're using Quick Add block on the main page for this.
@@ -150,12 +148,13 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
     $this->openCiviPage("participant/add", "reset=1&action=add&context=standalone", "_qf_Participant_upload-bottom");
 
     // Type contact last name in contact auto-complete, wait for dropdown and click first result
-    $this->webtestFillAutocomplete($firstName, 'contact_id');
+    $this->webtestFillAutocomplete($firstName);
 
     // Select event. Based on label for now.
     $this->select2("event_id", $eventName);
 
     // Select role
+    $this->waitForAjaxContent();
     $this->multiselect2("role_id", array('Volunteer'));
 
     // Choose Registration Date.
@@ -212,14 +211,14 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
     $this->click("remove");
     $this->click("_qf_Component_next-bottom");
     $this->waitForPageToLoad($this->getTimeoutMsec());
-    $this->assertTrue($this->isTextPresent("Changes Saved."));
+    $this->assertTrue($this->isTextPresent("Changes Saved"));
 
     $this->openCiviPage("event/search", "reset=1", "_qf_Search_refresh");
 
     $this->type('sort_name', $firstName);
     $this->click("_qf_Search_refresh");
-    $this->waitForElementPresent("xpath=//div[@id='participantSearch']");
-    $this->click("xpath=//div[@id='participantSearch']/table/tbody/tr/td[11]/span/a[text()='Edit']");
+    $this->waitForElementPresent("xpath=//table[@class='selector row-highlight']");
+    $this->click("xpath=//table[@class='selector row-highlight']/tbody/tr/td[11]/span/a[text()='Edit']");
     $this->waitForElementPresent("_qf_Participant_cancel-bottom");
     $this->assertTrue($this->isTextPresent("$campaignTitle"));
   }
@@ -227,11 +226,10 @@ class WebTest_Campaign_OfflineEventRegistrationTest extends CiviSeleniumTestCase
   /**
    * @return mixed
    */
-  function registerUrl() {
+  public function registerUrl() {
     $this->openCiviPage("event/manage", "reset=1");
     $eventId = explode('-', $this->getAttribute("//div[@id='event_status_id']//div[2]/table/tbody/tr@id"));
     return $eventId[1];
   }
 
 }
-

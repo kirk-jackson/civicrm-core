@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -27,22 +27,23 @@
 
 {if $searchtype eq 'ts_sel'}
 <div id="popupContainer">
-  <table id="selectedRecords-{$group.id}" class="display crm-copy-fields">
-    <thead>
-    <tr class="columnheader">
-      <th class="contact_details">{ts}Name{/ts}</th>
-    </tr>
-    </thead>
-
-    <tbody>
-      {foreach from=$value item='row'}
-      <tr class="{cycle values="odd-row,even-row"}">
-        <td class="name">{$row}</td>
+  <div class="crm-block crm-form-block crm-search-form-block">
+    <table id="selectedRecords-{$group.id}" class="display crm-copy-fields crm-sortable">
+      <thead>
+      <tr class="columnheader">
+        <th class="contact_details">{ts}Name{/ts}</th>
       </tr>
-      {/foreach}
-    </tbody>
-  </table>
+      </thead>
 
+      <tbody>
+        {foreach from=$value item='row'}
+        <tr class="{cycle values="odd-row,even-row"}">
+          <td class="name">{$row}</td>
+        </tr>
+        {/foreach}
+      </tbody>
+    </table>
+  </div>
 </div><br />
 <a href="#" id="popup-button" title="{ts}View Selected Contacts{/ts}">{ts}View Selected Contacts{/ts}</a>
 {/if}
@@ -53,12 +54,12 @@
   CRM.$(function($) {
     $("#popupContainer").css({
       "background-color":"#E0E0E0",
-      'display':'none',
+      'display':'none'
     });
 
     $("#popup-button").click(function() {
       $("#popupContainer").dialog({
-        title: "Selected Contacts",
+        title: {/literal}"{ts escape='js'}Selected Contacts{/ts}"{literal},
         width:700,
         height:500,
         modal: true,
@@ -82,19 +83,6 @@
       count++;
     });
 
-    columns    = columns.substring(0, columns.length - 1 );
-    sortColumn = sortColumn.substring(0, sortColumn.length - 1 );
-    eval('sortColumn =[' + sortColumn + ']');
-    eval('columns =[' + columns + ']');
-
-    //load jQuery data table.
-    $('#selectedRecords-{/literal}{$group.id}{literal}').dataTable( {
-      "sPaginationType": "full_numbers",
-      "bJQueryUI"  : true,
-      "aaSorting"  : sortColumn,
-      "aoColumns"  : columns,
-      "bFilter"    : false
-    });
   });
 
 </script>

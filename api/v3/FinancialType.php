@@ -1,10 +1,9 @@
 <?php
-
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2017                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -24,59 +23,50 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
- * File for the CiviCRM APIv3 financial_type functions
+ * This api exposes CiviCRM FinancialType.
  *
  * @package CiviCRM_APIv3
- * @subpackage API_financial_type
- *
  */
 
 /**
- * Save a financial_type
+ * Save a FinancialType.
  *
- * Allowed @params array keys are:
- * {@getfields financial_type_create}
- * @example financial_typeCreate.php
+ * @param array $params
  *
- * @param $params
- *
- * @return array of newly created financial_type property values.
- * @access public
+ * @return array
  */
 function civicrm_api3_financial_type_create($params) {
-  return _civicrm_api3_basic_create(_civicrm_api3_get_BAO(__FUNCTION__), $params);
+  return _civicrm_api3_basic_create(_civicrm_api3_get_BAO(__FUNCTION__), $params, 'FinancialType');
+}
+
+function _civicrm_api3_financial_type_create_spec(&$params) {
+  $params['name']['api.required'] = 1;
+  $params['name']['type'] = CRM_Utils_Type::T_STRING;
+  unset($params['name']['pseudoconstant']);
 }
 
 /**
- * Get a financial_type
+ * Get a FinancialType.
  *
- * Allowed @params array keys are:
- * {@getfields financial_type_get}
- * @example financial_typeCreate.php
+ * @param array $params
  *
- * @param $params
- *
- * @return array of retrieved financial_type property values.
- * @access public
+ * @return array
+ *   Array of retrieved FinancialType property values.
  */
 function civicrm_api3_financial_type_get($params) {
   return _civicrm_api3_basic_get(_civicrm_api3_get_BAO(__FUNCTION__), $params);
 }
 
 /**
- * Delete a financial_type
+ * Delete a FinancialType.
  *
- * Allowed @params array keys are:
- * {@getfields financial_type_delete}
- * @example financial_typeCreate.php
+ * @param array $params
  *
- * @param $params
- *
- * @return array of deleted values.
- * @access public
+ * @return array
+ *   Array of deleted values.
  */
 function civicrm_api3_financial_type_delete($params) {
   return _civicrm_api3_basic_delete(_civicrm_api3_get_BAO(__FUNCTION__), $params);

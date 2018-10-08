@@ -1,9 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright (C) 2011 Marty Wright                                    |
- | Licensed to CiviCRM under the Academic Free License version 3.0.   |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,13 +27,12 @@
 {strip}
   {if $rows and is_array($rows)}
     {include file="CRM/common/enableDisableApi.tpl"}
-    {include file="CRM/common/crmeditable.tpl"}
     {include file="CRM/common/jsortable.tpl"}
   {/if}
   <table id="scheduleReminders" class="display">
     <thead>
     <tr id="options" class="columnheader">
-      <th class="sortable">{ts}Title{/ts}</th>
+      <th id="sortable">{ts}Title{/ts}</th>
       <th >{ts}Reminder For{/ts}</th>
       <th >{ts}When{/ts}</th>
       <th >{ts}While{/ts}</th>

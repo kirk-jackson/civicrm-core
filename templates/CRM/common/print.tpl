@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -30,6 +30,7 @@
 <head>
   <title>{if $pageTitle}{$pageTitle|strip_tags}{else}{ts}Printer-Friendly View{/ts} | {ts}CiviCRM{/ts}{/if}</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
   {crmRegion name='html-header' allowCmsOverride=0}{/crmRegion}
   <style type="text/css" media="print">@import url({$config->resourceBase}css/print.css);</style>
 </head>
@@ -44,8 +45,7 @@
 {include file="CRM/common/status.tpl"}
 
 {crmRegion name='page-body' allowCmsOverride=0}
-<!-- .tpl file invoked: {$tplFile}. Call via form.tpl if we have a form in the page. -->
-  {if $isForm}
+  {if $isForm and isset($formTpl)}
     {include file="CRM/Form/$formTpl.tpl"}
   {else}
     {include file=$tplFile}
@@ -53,7 +53,11 @@
 {/crmRegion}
 
 
-{crmRegion name='page-footer' allowCmsOverride=0}{/crmRegion}
+{crmRegion name='page-footer' allowCmsOverride=0}
+  <script type="text/javascript">
+    window.print();
+  </script>
+{/crmRegion}
 </div> {* end crm-container div *}
 </body>
 </html>

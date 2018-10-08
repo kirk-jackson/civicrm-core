@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,12 +23,12 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
+ * @copyright CiviCRM LLC (c) 2004-2018
  * $Id$
  *
  */
@@ -38,95 +38,70 @@
  * used by the search forms
  *
  */
-class CRM_Grant_Task {
-  CONST DELETE_GRANTS = 1, PRINT_GRANTS = 2, EXPORT_GRANTS = 3, UPDATE_GRANTS = 4;
+class CRM_Grant_Task extends CRM_Core_Task {
 
-  /**
-   * the task array
-   *
-   * @var array
-   * @static
-   */
-  static $_tasks = NULL;
+  const
+    // Grant Tasks
+    UPDATE_GRANTS = 701;
 
-  /**
-   * the optional task array
-   *
-   * @var array
-   * @static
-   */
-  static $_optionalTasks = NULL;
+  static $objectType = 'grant';
 
   /**
    * These tasks are the core set of tasks that the user can perform
    * on a contact / group of contacts
    *
-   * @return array the set of tasks for a group of contacts
-   * @static
-   * @access public
+   * @return array
+   *   the set of tasks for a group of contacts
    */
-  static function &tasks() {
+  public static function tasks() {
     if (!(self::$_tasks)) {
-      self::$_tasks = array(1 => array(
-        'title' => ts('Delete Grants'),
+      self::$_tasks = array(
+        self::TASK_DELETE => array(
+          'title' => ts('Delete grants'),
           'class' => 'CRM_Grant_Form_Task_Delete',
           'result' => FALSE,
         ),
-        2 => array(
-          'title' => ts('Print Selected Rows'),
+        self::TASK_PRINT => array(
+          'title' => ts('Print selected rows'),
           'class' => 'CRM_Grant_Form_Task_Print',
           'result' => FALSE,
         ),
-        3 => array(
-          'title' => ts('Export Grants'),
+        self::TASK_EXPORT => array(
+          'title' => ts('Export grants'),
           'class' => array(
             'CRM_Export_Form_Select',
             'CRM_Export_Form_Map',
           ),
           'result' => FALSE,
         ),
-        4 => array(
-          'title' => ts('Update Grants'),
+        self::UPDATE_GRANTS => array(
+          'title' => ts('Update grants'),
           'class' => 'CRM_Grant_Form_Task_Update',
           'result' => FALSE,
         ),
       );
+
+      if (!CRM_Core_Permission::check('delete in CiviGrant')) {
+        unset(self::$_tasks[self::TASK_DELETE]);
+      }
+
+      parent::tasks();
     }
-    if (!CRM_Core_Permission::check('delete in CiviGrant')) {
-      unset(self::$_tasks[1]);
-    }
-    CRM_Utils_Hook::searchTasks('grant', self::$_tasks);
-    asort(self::$_tasks);
+
     return self::$_tasks;
   }
 
   /**
-   * These tasks are the core set of task titles
-   *
-   * @return array the set of task titles
-   * @static
-   * @access public
-   */
-  static function &taskTitles() {
-    self::tasks();
-    $titles = array();
-    foreach (self::$_tasks as $id => $value) {
-      $titles[$id] = $value['title'];
-    }
-    return $titles;
-  }
-
-  /**
-   * show tasks selectively based on the permission level
+   * Show tasks selectively based on the permission level
    * of the user
    *
    * @param int $permission
+   * @param array $params
    *
-   * @return array set of tasks that are valid for the user
-   * @access public
+   * @return array
+   *   set of tasks that are valid for the user
    */
-  static function &permissionedTaskTitles($permission) {
-    $tasks = array();
+  public static function permissionedTaskTitles($permission, $params = array()) {
     if (($permission == CRM_Core_Permission::EDIT)
       || CRM_Core_Permission::check('edit grants')
     ) {
@@ -134,13 +109,15 @@ class CRM_Grant_Task {
     }
     else {
       $tasks = array(
-        3 => self::$_tasks[3]['title'],
+        self::TASK_EXPORT => self::$_tasks[self::TASK_EXPORT]['title'],
       );
       //CRM-4418,
       if (CRM_Core_Permission::check('delete in CiviGrant')) {
-        $tasks[1] = self::$_tasks[1]['title'];
+        $tasks[self::TASK_DELETE] = self::$_tasks[self::TASK_DELETE]['title'];
       }
     }
+
+    $tasks = parent::corePermissionedTaskTitles($tasks, $permission, $params);
     return $tasks;
   }
 
@@ -149,20 +126,17 @@ class CRM_Grant_Task {
    *
    * @param int $value
    *
-   * @return array the set of tasks for a group of contacts
-   * @static
-   * @access public
+   * @return array
+   *   the set of tasks for a group of contacts
    */
-  static function getTask($value) {
+  public static function getTask($value) {
     self::tasks();
-    if (!$value || !CRM_Utils_Array::value($value, self::$_tasks)) {
-      // make the print task by default
-      $value = 2;
-    }
-    return array(
-      self::$_tasks[$value]['class'],
-      self::$_tasks[$value]['result'],
-    );
-  }
-}
 
+    if (!CRM_Utils_Array::value($value, self::$_tasks)) {
+      // make it the print task by default
+      $value = self::TASK_PRINT;
+    }
+    return parent::getTask($value);
+  }
+
+}

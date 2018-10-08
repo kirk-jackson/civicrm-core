@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -65,9 +65,35 @@
     }
 
   }
+
+  var adminVisibilityID = 0;
+  cj('#visibility_id').on('change', function () {
+    if (adminVisibilityID == 0) {
+      CRM.api3('OptionValue', 'getvalue', {
+        'sequential': 1,
+        'return': 'value',
+        'option_group_id': 'visibility',
+        'name': 'admin'
+      }).done(function(result) {
+        adminVisibilityID = result.result;
+        if (cj('#visibility_id').val() == adminVisibilityID) {
+          updateVisibilitySelects(adminVisibilityID);
+        }
+      });
+    } else {
+      if (cj('#visibility_id').val() == adminVisibilityID) {
+        updateVisibilitySelects(adminVisibilityID);
+      }
+    }
+  });
+
+  function updateVisibilitySelects(value) {
+    for (var i=1; i<=15; i++) {
+      cj('#option_visibility_id_' + i).val(value);
+    }
+  }
 </script>
 {/literal}
-<h3>{if $action eq 1}{ts}Add Field{/ts}{elseif $action eq 2}{ts}Edit Field{/ts}{/if}</h3>
 <div class="crm-block crm-form-block crm-price-field-form-block">
   <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="top"}</div>
   <table class="form-layout">
@@ -91,7 +117,7 @@
   </table>
 
   <div class="spacer"></div>
-  <div id="price-block" {if $action eq 2 && $form.html_type.value.0 eq 'Text'} class="show-block" {else} class="hide-block" {/if}>
+  <div id="price-block" {if $action eq 2 && $form.html_type.value.0 eq 'Text'} class="show-block" {else} class="hiddenElement" {/if}>
     <table class="form-layout">
       <tr class="crm-price-field-form-block-price">
         <td class="label">{$form.price.label} <span class="crm-marker" title="{ts}This field is required.{/ts}">*</span></td>
@@ -100,6 +126,10 @@
           <br /><span class="description">{ts}Unit price.{/ts}</span> {help id="id-negative"}
         {/if}
         </td>
+      </tr>
+      <tr class="crm-price-field-form-block-non-deductible-amount">
+        <td class="label">{$form.non_deductible_amount.label}</td>
+        <td>{$form.non_deductible_amount.html}</td>
       </tr>
     {if $useForEvent}
       <tr class="crm-price-field-form-block-count">
@@ -131,7 +161,7 @@
 
 {if $action eq 1}
 {* Conditionally show table for setting up selection options - for field types = radio, checkbox or select *}
-  <div id='showoption' class="hide-block">{ include file="CRM/Price/Form/OptionFields.tpl"}</div>
+  <div id='showoption' class="hiddenElement">{ include file="CRM/Price/Form/OptionFields.tpl"}</div>
 {/if}
   <table class="form-layout">
     <tr id="optionsPerLine" class="crm-price-field-form-block-options_per_line">
@@ -155,11 +185,20 @@
       </td>
     </tr>
 
+    <tr class="crm-price-field-form-block-help_pre">
+      <td class="label">{$form.help_pre.label}</td>
+      <td>{if $action == 2}{include file='CRM/Core/I18n/Dialog.tpl' table='civicrm_price_field' field='help_pre' id=$fid}{/if}{$form.help_pre.html|crmAddClass:huge}&nbsp;
+      {if $action neq 4}
+        <div class="description">{ts}Explanatory text displayed to users at the beginning of this field.{/ts}</div>
+      {/if}
+      </td>
+    </tr>
+
     <tr class="crm-price-field-form-block-help_post">
       <td class="label">{$form.help_post.label}</td>
       <td>{if $action == 2}{include file='CRM/Core/I18n/Dialog.tpl' table='civicrm_price_field' field='help_post' id=$fid}{/if}{$form.help_post.html|crmAddClass:huge}&nbsp;
       {if $action neq 4}
-        <div class="description">{ts}Explanatory text displayed to users for this field.{/ts}</div>
+        <div class="description">{ts}Explanatory text displayed to users below this field.{/ts}</div>
       {/if}
       </td>
     </tr>

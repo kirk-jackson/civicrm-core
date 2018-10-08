@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,12 +23,12 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
+ * @copyright CiviCRM LLC (c) 2004-2018
  * $Id$
  *
  */
@@ -39,28 +39,29 @@
 class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
 
   /**
-   * The action links that we need to display for the browse screen
+   * The action links that we need to display for the browse screen.
    *
    * @var array
-   * @static
    */
   static $_links = NULL;
 
   /**
-   * Get BAO Name
+   * Get BAO Name.
    *
-   * @return string Classname of BAO.
+   * @return string
+   *   Classname of BAO.
    */
-  function getBAOName() {
+  public function getBAOName() {
     return 'CRM_PCP_BAO_PCP';
   }
 
   /**
-   * Get action Links
+   * Get action Links.
    *
-   * @return array (reference) of action links
+   * @return array
+   *   (reference) of action links
    */
-  function &links() {
+  public function &links() {
     if (!(self::$_links)) {
       // helper variable for nicer formatting
       $deleteExtra = ts('Are you sure you want to delete this Campaign Page ?');
@@ -91,12 +92,14 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
           'extra' => 'onclick = "return confirm(\'' . $deleteExtra . '\');"',
           'title' => ts('Delete Personal Campaign Page'),
         ),
-        CRM_Core_Action::ENABLE => array('name' => ts('Enable'),
+        CRM_Core_Action::ENABLE => array(
+          'name' => ts('Enable'),
           'url' => 'civicrm/admin/pcp',
           'qs' => 'action=enable&id=%%id%%',
           'title' => ts('Enable'),
         ),
-        CRM_Core_Action::DISABLE => array('name' => ts('Disable'),
+        CRM_Core_Action::DISABLE => array(
+          'name' => ts('Disable'),
           'url' => 'civicrm/admin/pcp',
           'qs' => 'action=disable&id=%%id%%',
           'title' => ts('Disable'),
@@ -116,28 +119,21 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
    * @param
    *
    * @return void
-   * @access public
    */
-  function run() {
-    // get the requested action
-    $action = CRM_Utils_Request::retrieve('action', 'String',
-      $this, FALSE,
-      'browse'
-    );
-    if ($action & CRM_Core_Action::REVERT) {
-      $id = CRM_Utils_Request::retrieve('id', 'Positive', $this, FALSE);
+  public function run() {
+    $id = $this->getIdAndAction();
+
+    if ($this->_action & CRM_Core_Action::REVERT) {
       CRM_PCP_BAO_PCP::setIsActive($id, 0);
       $session = CRM_Core_Session::singleton();
       $session->pushUserContext(CRM_Utils_System::url(CRM_Utils_System::currentPath(), 'reset=1'));
     }
-    elseif ($action & CRM_Core_Action::RENEW) {
-      $id = CRM_Utils_Request::retrieve('id', 'Positive', $this, FALSE);
+    elseif ($this->_action & CRM_Core_Action::RENEW) {
       CRM_PCP_BAO_PCP::setIsActive($id, 1);
       $session = CRM_Core_Session::singleton();
       $session->pushUserContext(CRM_Utils_System::url(CRM_Utils_System::currentPath(), 'reset=1'));
     }
-    elseif ($action & CRM_Core_Action::DELETE) {
-      $id = CRM_Utils_Request::retrieve('id', 'Positive', $this, FALSE);
+    elseif ($this->_action & CRM_Core_Action::DELETE) {
       $session = CRM_Core_Session::singleton();
       $session->pushUserContext(CRM_Utils_System::url(CRM_Utils_System::currentPath(), 'reset=1&action=browse'));
       $controller = new CRM_Core_Controller_Simple('CRM_PCP_Form_PCP',
@@ -154,7 +150,7 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
     $this->browse();
 
     // parent run
-    parent::run();
+    CRM_Core_Page::run();
   }
 
   /**
@@ -164,10 +160,10 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
    * @param null $action
    *
    * @return void
-   * @access public
-   * @static
    */
-  function browse($action = NULL) {
+  public function browse($action = NULL) {
+    CRM_Core_Resources::singleton()->addStyleFile('civicrm', 'css/searchForm.css', 1, 'html-header');
+
     $this->_sortByCharacter = CRM_Utils_Request::retrieve('sortByCharacter',
       'String',
       $this
@@ -177,7 +173,6 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
     ) {
       $this->_sortByCharacter = '';
     }
-
 
     $status = CRM_PCP_BAO_PCP::buildOptions('status_id', 'create');
 
@@ -219,7 +214,7 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
       }
     }
 
-    $approvedId = CRM_Core_OptionGroup::getValue('pcp_status', 'Approved', 'name');
+    $approvedId = CRM_Core_PseudoConstant::getKey('CRM_PCP_BAO_PCP', 'status_id', 'Approved');
 
     //check for delete CRM-4418
     $allowToDelete = CRM_Core_Permission::check('delete in CiviContribute');
@@ -235,7 +230,7 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
     }
 
     // get all event pages. pcp campaign start and end dates for event related pcp's use the online registration start and end dates,
-    // altho if target is contribution page this might not be correct. fixme? dgg
+    // although if target is contribution page this might not be correct. fixme? dgg
     $query = "SELECT id, title, start_date, end_date, registration_start_date, registration_end_date
                   FROM civicrm_event
                   WHERE is_template IS NULL OR is_template != 1";
@@ -343,7 +338,7 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
     }
   }
 
-  function search() {
+  public function search() {
 
     if ($this->_action & CRM_Core_Action::DELETE) {
       return;
@@ -357,20 +352,22 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
   }
 
   /**
-   * Get name of edit form
+   * Get name of edit form.
    *
-   * @return string Classname of edit form.
+   * @return string
+   *   Classname of edit form.
    */
-  function editForm() {
+  public function editForm() {
     return 'CRM_PCP_Form_PCP';
   }
 
   /**
-   * Get edit form name
+   * Get edit form name.
    *
-   * @return string name of this page.
+   * @return string
+   *   name of this page.
    */
-  function editName() {
+  public function editName() {
     return ts('Personal Campaign Page');
   }
 
@@ -379,18 +376,19 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
    *
    * @param null $mode
    *
-   * @return string user context.
+   * @return string
+   *   user context.
    */
-  function userContext($mode = NULL) {
+  public function userContext($mode = NULL) {
     return 'civicrm/admin/pcp';
   }
 
-  //@TODO this function changed, debug this at runtime
   /**
+   * @TODO this function changed, debug this at runtime
    * @param $whereClause
-   * @param $whereParams
+   * @param array $whereParams
    */
-  function pagerAtoZ($whereClause, $whereParams) {
+  public function pagerAtoZ($whereClause, $whereParams) {
     $where = '';
     if ($whereClause) {
       if (strpos($whereClause, ' AND') == 0) {
@@ -411,5 +409,5 @@ class CRM_PCP_Page_PCP extends CRM_Core_Page_Basic {
     $aToZBar = CRM_Utils_PagerAToZ::getAToZBar($dao, $this->_sortByCharacter, TRUE);
     $this->assign('aToZ', $aToZBar);
   }
-}
 
+}

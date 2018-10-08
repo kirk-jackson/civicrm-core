@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,14 +23,12 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
@@ -39,7 +37,7 @@
 class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
 
   /**
-   * Cache for the current domain object
+   * Cache for the current domain object.
    */
   static $_domain = NULL;
 
@@ -49,75 +47,37 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   private $_location = NULL;
 
   /**
-   * Takes a bunch of params that are needed to match certain criteria and
-   * retrieves the relevant objects. Typically the valid params are only
-   * contact_id. We'll tweak this function to be more full featured over a period
-   * of time. This is the inverse function of create. It also stores all the retrieved
-   * values in the default array
+   * Fetch object based on array of properties.
    *
-   * @param array $params   (reference ) an assoc array of name/value pairs
-   * @param array $defaults (reference ) an assoc array to hold the flattened values
+   * @param array $params
+   *   (reference ) an assoc array of name/value pairs.
+   * @param array $defaults
+   *   (reference ) an assoc array to hold the flattened values.
    *
-   * @return object CRM_Core_DAO_Domain object
-   * @access public
-   * @static
+   * @return CRM_Core_DAO_Domain
    */
-  static function retrieve(&$params, &$defaults) {
+  public static function retrieve(&$params, &$defaults) {
     return CRM_Core_DAO::commonRetrieve('CRM_Core_DAO_Domain', $params, $defaults);
   }
 
   /**
-   * Get the domain BAO
+   * Get the domain BAO.
    *
-   * @param null $reset
+   * @param bool $reset
    *
-   * @return null|object CRM_Core_BAO_Domain
-   * @access public
-   * @static
+   * @return \CRM_Core_BAO_Domain
+   * @throws \CRM_Core_Exception
    */
-  static function &getDomain($reset = null) {
+  public static function getDomain($reset = NULL) {
     static $domain = NULL;
     if (!$domain || $reset) {
       $domain = new CRM_Core_BAO_Domain();
       $domain->id = CRM_Core_Config::domainID();
       if (!$domain->find(TRUE)) {
-        CRM_Core_Error::fatal();
+        throw new CRM_Core_Exception('No domain in DB');
       }
     }
     return $domain;
-  }
-
- /**
-  * Change active domain (ie. to perform a temporary action) such as changing
-  * config for all domains
-  *
-  * Switching around the global domain variable is very risky business. This
-  * is ONLY used as a hack to allow CRM_Core_BAO_Setting::setItems to manipulate
-  * the civicrm_domain.config_backend in multiple domains. When/if config_backend
-  * goes away, this hack should be removed.
-  *
-  * @param integer $domainID id for domain you want to set as current
-  * @deprecated
-  * @see http://issues.civicrm.org/jira/browse/CRM-11204
-  */
-  static function setDomain($domainID){
-    CRM_Core_Config::domainID($domainID);
-    self::getDomain($domainID);
-    CRM_Core_Config::singleton(TRUE, TRUE);
-  }
-
-  /**
-   * Reset domain to default (ie. as loaded from settings). This is the
-   * counterpart to CRM_Core_BAO_Domain::setDomain.
-   *
-   * @internal param int $domainID id for domain you want to set as current
-   * @deprecated
-   * @see CRM_Core_BAO_Domain::setDomain
-   */
-  static function resetDomain(){
-    CRM_Core_Config::domainID(null, true);
-    self::getDomain(null, true);
-    CRM_Core_Config::singleton(TRUE, TRUE);
   }
 
   /**
@@ -125,28 +85,26 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
    *
    * @return null|string
    */
-  static function version( $skipUsingCache = false ) {
+  public static function version($skipUsingCache = FALSE) {
     return CRM_Core_DAO::getFieldValue('CRM_Core_DAO_Domain',
       CRM_Core_Config::domainID(),
-                                       'version',
-                                       'id',
-                                       $skipUsingCache
+      'version',
+      'id',
+      $skipUsingCache
     );
   }
 
   /**
-   * Get the location values of a domain
+   * Get the location values of a domain.
    *
-   * @param NULL
-   *
-   * @return array        Location::getValues
-   * @access public
+   * @return array
+   *   Location::getValues
    */
-  function &getLocationValues() {
+  public function &getLocationValues() {
     if ($this->_location == NULL) {
-      $domain = self::getDomain(null);
+      $domain = self::getDomain(NULL);
       $params = array(
-        'contact_id' => $domain->contact_id
+        'contact_id' => $domain->contact_id,
       );
       $this->_location = CRM_Core_BAO_Location::getValues($params, TRUE);
 
@@ -158,15 +116,15 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   }
 
   /**
-   * Save the values of a domain
+   * Save the values of a domain.
    *
-   * @param $params
-   * @param $id
+   * @param array $params
+   * @param int $id
    *
-   * @return domain array
-   * @access public
+   * @return array
+   *   domain
    */
-  static function edit(&$params, &$id) {
+  public static function edit(&$params, &$id) {
     $domain = new CRM_Core_DAO_Domain();
     $domain->id = $id;
     $domain->copyValues($params);
@@ -175,16 +133,16 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   }
 
   /**
-   * Create a new domain
+   * Create a new domain.
    *
-   * @param $params
+   * @param array $params
    *
-   * @return domain array
-   * @access public
+   * @return array
+   *   domain
    */
-  static function create($params) {
+  public static function create($params) {
     $domain = new CRM_Core_DAO_Domain();
-    $domain->copyValues($params);
+    $domain->copyValues($params, TRUE);
     $domain->save();
     return $domain;
   }
@@ -192,7 +150,7 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   /**
    * @return bool
    */
-  static function multipleDomains() {
+  public static function multipleDomains() {
     $session = CRM_Core_Session::singleton();
 
     $numberDomains = $session->get('numberDomains');
@@ -207,25 +165,32 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   /**
    * @param bool $skipFatal
    *
+   * @return array
+   *   name & email for domain
    * @throws Exception
    */
-  static function getNameAndEmail($skipFatal = FALSE) {
+  public static function getNameAndEmail($skipFatal = FALSE, $returnString = FALSE) {
     $fromEmailAddress = CRM_Core_OptionGroup::values('from_email_address', NULL, NULL, NULL, ' AND is_default = 1');
     if (!empty($fromEmailAddress)) {
+      if ($returnString) {
+        // Return a string like: "Demonstrators Anonymous" <info@example.org>
+        return $fromEmailAddress;
+      }
       foreach ($fromEmailAddress as $key => $value) {
-        $email     = CRM_Utils_Mail::pluckEmailFromHeader($value);
+        $email = CRM_Utils_Mail::pluckEmailFromHeader($value);
         $fromArray = explode('"', $value);
-        $fromName  = CRM_Utils_Array::value(1, $fromArray);
+        $fromName = CRM_Utils_Array::value(1, $fromArray);
         break;
       }
       return array($fromName, $email);
     }
-    elseif ($skipFatal) {
-      return array('', '');
+
+    if ($skipFatal) {
+      return array(NULL, NULL);
     }
 
-    $url = CRM_Utils_System::url('civicrm/admin/domain',
-      'action=update&reset=1'
+    $url = CRM_Utils_System::url('civicrm/admin/options/from_email_address',
+      'reset=1'
     );
     $status = ts("There is no valid default from email address configured for the domain. You can configure here <a href='%1'>Configure From Email Address.</a>", array(1 => $url));
 
@@ -233,11 +198,11 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   }
 
   /**
-   * @param $contactID
+   * @param int $contactID
    *
    * @return bool|null|object|string
    */
-  static function addContactToDomainGroup($contactID) {
+  public static function addContactToDomainGroup($contactID) {
     $groupID = self::getGroupId();
 
     if ($groupID) {
@@ -252,19 +217,15 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   /**
    * @return bool|null|object|string
    */
-  static function getGroupId() {
+  public static function getGroupId() {
     static $groupID = NULL;
 
     if ($groupID) {
       return $groupID;
     }
 
-    $domainGroupID = CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::MULTISITE_PREFERENCES_NAME,
-      'domain_group_id'
-    );
-    $multisite = CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::MULTISITE_PREFERENCES_NAME,
-      'is_enabled'
-    );
+    $domainGroupID = Civi::settings()->get('domain_group_id');
+    $multisite = Civi::settings()->get('is_enabled');
 
     if ($domainGroupID) {
       $groupID = $domainGroupID;
@@ -275,27 +236,18 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
         CRM_Core_Config::domainID(), 'name'
       );
       $groupID = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Group',
-        $title, 'id', 'title', true
+        $title, 'id', 'title', TRUE
       );
-      if (empty($groupID) && !empty($title)) {
-        $groupParams = array(
-          'title' => $title,
-          'is_active' => 1,
-          'no_parent' => 1,
-        );
-        $group = CRM_Contact_BAO_Group::create($groupParams);
-        $groupID = $group->id;
-      }
     }
     return $groupID ? $groupID : FALSE;
   }
 
   /**
-   * @param $groupId
+   * @param int $groupId
    *
    * @return bool
    */
-  static function isDomainGroup($groupId) {
+  public static function isDomainGroup($groupId) {
     $domainGroupID = self::getGroupId();
     return $domainGroupID == $groupId ? TRUE : FALSE;
   }
@@ -303,7 +255,7 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
   /**
    * @return array
    */
-  static function getChildGroupIds() {
+  public static function getChildGroupIds() {
     $domainGroupID = self::getGroupId();
     $childGrps = array();
 
@@ -314,11 +266,12 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
     return $childGrps;
   }
 
-  // function to retrieve a list of contact-ids that belongs to current domain/site.
   /**
+   * Retrieve a list of contact-ids that belongs to current domain/site.
+   *
    * @return array
    */
-  static function getContactList() {
+  public static function getContactList() {
     $siteGroups = CRM_Core_BAO_Domain::getChildGroupIds();
     $siteContacts = array();
 
@@ -336,5 +289,42 @@ class CRM_Core_BAO_Domain extends CRM_Core_DAO_Domain {
     }
     return $siteContacts;
   }
-}
 
+  /**
+   * CRM-20308 & CRM-19657
+   * Return domain information / user information for the usage in receipts
+   * Try default from address then fall back to using logged in user details
+   */
+  public static function getDefaultReceiptFrom() {
+    $domain = civicrm_api3('domain', 'getsingle', array('id' => CRM_Core_Config::domainID()));
+    if (!empty($domain['from_email'])) {
+      return array($domain['from_name'], $domain['from_email']);
+    }
+    if (!empty($domain['domain_email'])) {
+      return array($domain['name'], $domain['domain_email']);
+    }
+    $userName = '';
+    $userEmail = '';
+
+    if (!Civi::settings()->get('allow_mail_from_logged_in_contact')) {
+      return array($userName, $userEmail);
+    }
+
+    $userID = CRM_Core_Session::singleton()->getLoggedInContactID();
+    if (!empty($userID)) {
+      list($userName, $userEmail) = CRM_Contact_BAO_Contact_Location::getEmailDetails($userID);
+    }
+    // If still empty fall back to the logged in user details.
+    // return empty values no matter what.
+    return array($userName, $userEmail);
+  }
+
+  /**
+   * Get address to be used for system from addresses when a reply is not expected.
+   */
+  public static function getNoReplyEmailAddress() {
+    $emailDomain = CRM_Core_BAO_MailSettings::defaultDomain();
+    return "do-not-reply@$emailDomain";
+  }
+
+}

@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,36 +23,49 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
+ * @copyright CiviCRM LLC (c) 2004-2018
  * $Id$
  *
  */
 
 /**
  * This class generates form components for Payment-Instrument
- *
  */
 class CRM_Member_Form_MembershipView extends CRM_Core_Form {
 
   /**
-   * The action links that we need to display for the browse screen
+   * The action links that we need to display for the browse screen.
    *
    * @var array
-   * @static
    */
   static $_links = NULL;
 
   /**
-   * Add context information at the end of a link
+   * The id of the membership being viewed.
    *
-   * @return text extra query parameters
+   * @var int
    */
-  function addContext() {
+  private $membershipID;
+
+  /**
+   * Contact's ID.
+   *
+   * @var int
+   */
+  private $contactID;
+
+  /**
+   * Add context information at the end of a link.
+   *
+   * @return string
+   *   extra query parameters
+   */
+  public function addContext() {
     $extra = '';
     foreach (array('context', 'selectedChild') as $arg) {
       if ($value = CRM_Utils_Request::retrieve($arg, 'String', $this)) {
@@ -63,11 +76,12 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
   }
 
   /**
-   * Get action Links
+   * Get action Links.
    *
-   * @return array (reference) of action links
+   * @return array
+   *   (reference) of action links
    */
-  function &links() {
+  public function &links() {
     if (!(self::$_links)) {
       self::$_links = array(
         CRM_Core_Action::DELETE => array(
@@ -88,13 +102,14 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
   }
 
   /**
-   * Perform create or delete action on related memberships
+   * Perform create or delete action on related memberships.
    *
-   * @param string $action create or delete
-   * @param array $owner primary membership info (membership_id, contact_id, membership_type ...)
-   *
+   * @param string $action
+   *   Create or delete.
+   * @param array $owner
+   *   Primary membership info (membership_id, contact_id, membership_type ...).
    */
-  function relAction($action, $owner) {
+  public function relAction($action, $owner) {
     switch ($action) {
       case 'delete':
         $id = CRM_Utils_Request::retrieve('mid', 'Positive', $this);
@@ -104,6 +119,7 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
         CRM_Core_Session::setStatus(ts('Related membership for %1 has been deleted.', array(1 => $relatedDisplayName)),
           ts('Membership Deleted'), 'success');
         break;
+
       case 'create':
         $ids = array();
         $params = array(
@@ -125,6 +141,7 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
         CRM_Core_Session::setStatus(ts('Related membership for %1 has been created.', array(1 => $relatedDisplayName)),
           ts('Membership Added'), 'success');
         break;
+
       default:
         CRM_Core_Error::fatal(ts("Invalid action specified in URL"));
     }
@@ -139,24 +156,32 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
   }
 
   /**
-   * Function to set variables up before form is built
+   * Set variables up before form is built.
    *
    * @return void
-   * @access public
    */
   public function preProcess() {
-
     $values = array();
-    $id = CRM_Utils_Request::retrieve('id', 'Positive', $this);
+    $this->membershipID = CRM_Utils_Request::retrieve('id', 'Positive', $this);
+    $this->contactID = CRM_Utils_Request::retrieve('cid', 'Positive', $this);
 
     // Make sure context is assigned to template for condition where we come here view civicrm/membership/view
-    $context = CRM_Utils_Request::retrieve('context', 'String', $this);
+    $context = CRM_Utils_Request::retrieve('context', 'Alphanumeric', $this);
     $this->assign('context', $context);
 
-    if ($id) {
-      $params = array('id' => $id);
-
+    if ($this->membershipID) {
+      $params = array('id' => $this->membershipID);
       CRM_Member_BAO_Membership::retrieve($params, $values);
+      if (CRM_Financial_BAO_FinancialType::isACLFinancialTypeStatus()) {
+        $finTypeId = CRM_Core_DAO::getFieldValue('CRM_Member_DAO_MembershipType', $values['membership_type_id'], 'financial_type_id');
+        $finType = CRM_Contribute_PseudoConstant::financialType($finTypeId);
+        if (!CRM_Core_Permission::check('view contributions of type ' . $finType)) {
+          CRM_Core_Error::statusBounce(ts('You do not have permission to access this page.'));
+        }
+      }
+      else {
+        $this->assign('noACL', TRUE);
+      }
       $membershipType = CRM_Member_BAO_MembershipType::getMembershipTypeDetails($values['membership_type_id']);
 
       // Do the action on related Membership if needed
@@ -169,12 +194,12 @@ class CRM_Member_Form_MembershipView extends CRM_Core_Form {
       $this->assign('accessContribution', FALSE);
       if (CRM_Core_Permission::access('CiviContribute')) {
         $this->assign('accessContribution', TRUE);
-        CRM_Member_Page_Tab::associatedContribution($values['contact_id'], $id);
+        CRM_Member_Page_Tab::associatedContribution($values['contact_id'], $this->membershipID);
       }
 
       //Provide information about membership source when it is the result of a relationship (CRM-1901)
       $values['owner_membership_id'] = CRM_Core_DAO::getFieldValue('CRM_Member_DAO_Membership',
-        $id,
+        $this->membershipID,
         'owner_membership_id'
       );
 
@@ -230,8 +255,7 @@ END AS 'relType'
         $relTypeId = explode(CRM_Core_DAO::VALUE_SEPARATOR, $membershipType['relationship_type_id']);
         $relDirection = explode(CRM_Core_DAO::VALUE_SEPARATOR, $membershipType['relationship_direction']);
         foreach ($relTypeId as $rid) {
-          $dir = each($relDirection);
-          $relTypeDir[substr($dir['value'], 0, 1)][] = $rid;
+          $relTypeDir[substr($relDirection[0], 0, 1)][] = $rid;
         }
         // build query in 2 parts with a UNION if necessary
         // _x and _y are replaced with _a and _b first, then vice-versa
@@ -269,7 +293,7 @@ SELECT r.id, c.id as cid, c.display_name as name, c.job_title as comment,
           'start_date',
           'end_date',
           'is_current_member',
-          'status'
+          'status',
         );
 
         while ($dao->fetch()) {
@@ -363,12 +387,12 @@ SELECT r.id, c.id as cid, c.display_name as name, c.job_title as comment,
 
       CRM_Member_Page_Tab::setContext($this, $values['contact_id']);
 
-      $memType = CRM_Core_DAO::getFieldValue("CRM_Member_DAO_Membership", $id, "membership_type_id");
+      $memType = CRM_Core_DAO::getFieldValue("CRM_Member_DAO_Membership", $this->membershipID, "membership_type_id");
 
-      $groupTree = CRM_Core_BAO_CustomGroup::getTree('Membership', $this, $id, 0, $memType);
-      CRM_Core_BAO_CustomGroup::buildCustomDataView($this, $groupTree);
+      $groupTree = CRM_Core_BAO_CustomGroup::getTree('Membership', NULL, $this->membershipID, 0, $memType);
+      CRM_Core_BAO_CustomGroup::buildCustomDataView($this, $groupTree, FALSE, NULL, NULL, NULL, $this->membershipID);
 
-      $isRecur = CRM_Core_DAO::getFieldValue('CRM_Member_DAO_Membership', $id, 'contribution_recur_id');
+      $isRecur = CRM_Core_DAO::getFieldValue('CRM_Member_DAO_Membership', $this->membershipID, 'contribution_recur_id');
 
       $autoRenew = $isRecur ? TRUE : FALSE;
     }
@@ -377,7 +401,7 @@ SELECT r.id, c.id as cid, c.display_name as name, c.job_title as comment,
       $values['membership_type'] .= ' (test) ';
     }
 
-    $subscriptionCancelled = CRM_Member_BAO_Membership::isSubscriptionCancelled($id);
+    $subscriptionCancelled = CRM_Member_BAO_Membership::isSubscriptionCancelled($this->membershipID);
     $values['auto_renew'] = ($autoRenew && !$subscriptionCancelled) ? 'Yes' : 'No';
 
     //do check for campaigns
@@ -390,21 +414,19 @@ SELECT r.id, c.id as cid, c.display_name as name, c.job_title as comment,
   }
 
   /**
-   * Function to build the form
+   * Build the form object.
    *
    * @return void
-   * @access public
    */
   public function buildQuickForm() {
     $this->addButtons(array(
-        array(
-          'type' => 'cancel',
-          'name' => ts('Done'),
-          'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
-          'isDefault' => TRUE,
-        ),
-      )
-    );
+      array(
+        'type' => 'cancel',
+        'name' => ts('Done'),
+        'spacing' => '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+        'isDefault' => TRUE,
+      ),
+    ));
   }
-}
 
+}

@@ -127,9 +127,10 @@ ALTER TABLE civicrm_action_schedule ADD CONSTRAINT FK_civicrm_action_schedule_sm
 INSERT INTO `civicrm_uf_group`
      (`name`, `group_type`, {localize field='title'}`title`{/localize}, `is_cms_user`, `is_reserved`)
 VALUES
-   ('honoree_individual', 'Individual, Contact', {localize}'{ts escape="sql"}Honoree Individual{/ts}'{/localize}, 0, 1);
+   ('honoree_individual', 'Individual,Contact', {localize}'{ts escape="sql"}Honoree Individual{/ts}'{/localize}, 0, 1);
 
 SELECT @uf_group_id_honoree_individual := id from civicrm_uf_group where name = 'honoree_individual';
+SELECT @primaryLocation := id FROM civicrm_location_type WHERE is_default = 1;
 
 INSERT INTO `civicrm_uf_field`
       (`uf_group_id`, `field_name`, `is_required`, `is_reserved`, `weight`, `visibility`, `in_selector`, `is_searchable`, `location_type_id`, {localize field='label'}`label`{/localize}, field_type)
@@ -137,7 +138,7 @@ VALUES
       (@uf_group_id_honoree_individual, 'prefix_id',  0, 1, 1, 'User and User Admin Only', 0, 1, NULL, {localize}'{ts escape="sql"}Individual Prefix{/ts}'{/localize}, 'Individual'),
       (@uf_group_id_honoree_individual, 'first_name', 0, 1, 2, 'User and User Admin Only', 0, 1, NULL, {localize}'{ts escape="sql"}First Name{/ts}'{/localize},        'Individual'),
       (@uf_group_id_honoree_individual, 'last_name',  0, 1, 3, 'User and User Admin Only', 0, 1, NULL, {localize}'{ts escape="sql"}Last Name{/ts}'{/localize},         'Individual'),
-      (@uf_group_id_honoree_individual, 'email',      0, 1, 4, 'User and User Admin Only', 0, 1, 1,    {localize}'{ts escape="sql"}Email Address{/ts}'{/localize},     'Individual');
+      (@uf_group_id_honoree_individual, 'email',      0, 1, 4, 'User and User Admin Only', 0, 1, @primaryLocation, {localize}'{ts escape="sql"}Email Address{/ts}'{/localize},     'Individual');
 
 UPDATE civicrm_uf_join SET uf_group_id = @uf_group_id_honoree_individual WHERE module = 'soft_credit';
 
@@ -163,7 +164,7 @@ ALTER TABLE civicrm_pledge DROP honor_type_id;
 -- CRM-13964 and CRM-13965
 SELECT @option_group_id_cs   := max(id) from civicrm_option_group where name = 'contribution_status';
 SELECT @option_val_id_cs_wt  := MAX(weight) FROM civicrm_option_value WHERE option_group_id = @option_group_id_cs;
-SELECT @option_val_id_cs_val := MAX(value) FROM civicrm_option_value WHERE option_group_id = @option_group_id_cs;
+SELECT @option_val_id_cs_val := MAX(ROUND(value)) FROM civicrm_option_value WHERE option_group_id = @option_group_id_cs;
 
 INSERT INTO
    `civicrm_option_value` (`option_group_id`, {localize field='label'}label{/localize}, `value`, `name`, `grouping`, `filter`, `is_default`, `weight`, `is_optgroup`, `is_reserved`, `is_active`, `component_id`, `visibility_id`)
@@ -182,7 +183,7 @@ VALUES
 -- new activity types required for partial payments
 SELECT @option_group_id_act     := max(id) from civicrm_option_group where name = 'activity_type';
 SELECT @option_group_id_act_wt  := MAX(weight) FROM civicrm_option_value WHERE option_group_id = @option_group_id_act;
-SELECT @option_group_id_act_val := MAX(value) FROM civicrm_option_value WHERE option_group_id = @option_group_id_act;
+SELECT @option_group_id_act_val := MAX(ROUND(value)) FROM civicrm_option_value WHERE option_group_id = @option_group_id_act;
 SELECT @contributeCompId := max(id) FROM civicrm_component where name = 'CiviContribute';
 
 INSERT INTO
@@ -212,7 +213,7 @@ ALTER TABLE  `civicrm_mailing_job` CHANGE  `status`  `status` VARCHAR( 12 ) CHAR
 ALTER TABLE  `civicrm_mailing_group` CHANGE  `group_type`  `group_type` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL COMMENT  'Are the members of the group included or excluded?.';
 ALTER TABLE  `civicrm_mailing` CHANGE  `visibility`  `visibility` VARCHAR( 40 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT  'User and User Admin Only' COMMENT  'In what context(s) is the mailing contents visible (online viewing)';
 ALTER TABLE  `civicrm_mailing_component` CHANGE  `component_type`  `component_type` VARCHAR( 12 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL COMMENT  'Type of Component.';
-ALTER TABLE  `civicrm_mailing_bounce_type` CHANGE  `name`  `name` VARCHAR( 12 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT  'Type of bounce';
+ALTER TABLE  `civicrm_mailing_bounce_type` CHANGE  `name`  `name` VARCHAR( 24 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT  'Type of bounce';
 ALTER TABLE  `civicrm_participant_status_type` CHANGE  `class`  `class` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL COMMENT  'the general group of status type this one belongs to';
 ALTER TABLE  `civicrm_dedupe_rule_group` CHANGE  `contact_type`  `contact_type` VARCHAR( 12 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL COMMENT  'The type of contacts this group applies to';
 ALTER TABLE  `civicrm_dedupe_rule_group` CHANGE  `used`  `used` VARCHAR( 12 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL COMMENT 'Whether the rule should be used for cases where usage is Unsupervised, Supervised OR General(programatically)';
@@ -240,7 +241,7 @@ ALTER TABLE  `civicrm_group` CHANGE  `visibility`  `visibility` VARCHAR( 24 ) CH
 ALTER TABLE  `civicrm_contact` CHANGE  `preferred_mail_format`  `preferred_mail_format` VARCHAR( 8 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT  'Both' COMMENT  'What is the preferred mode of sending an email.';
 
 -- CRM-14183
-INSERT INTO civicrm_state_province (country_id, abbreviation, name) VALUES (1157, "PL", "Plateau");
+INSERT IGNORE INTO civicrm_state_province (country_id, abbreviation, name) VALUES (1157, "PL", "Plateau");
 UPDATE civicrm_state_province SET name = "Abuja Federal Capital Territory" WHERE name = "Abuja Capital Territory";
 
 -- CRM-13992
@@ -266,7 +267,7 @@ SET @devellastID:=LAST_INSERT_ID();
 INSERT INTO civicrm_navigation
 ( domain_id, url, label, name, permission, permission_operator, parent_id, is_active, has_separator, weight )
 VALUES
-( {$domainID}, 'civicrm/api/explorer', '{ts escape="sql" skip="true"}API Explorer{/ts}','API Explorer', 'administer CiviCRM', '', @devellastID, '1', NULL, 1 ),
+( {$domainID}, 'civicrm/api', '{ts escape="sql" skip="true"}API Explorer{/ts}','API Explorer', 'administer CiviCRM', '', @devellastID, '1', NULL, 1 ),
 ( {$domainID}, 'http://wiki.civicrm.org/confluence/display/CRMDOC/Develop', '{ts escape="sql" skip="true"}Developer Docs{/ts}', 'Developer Docs', 'administer CiviCRM', '', @devellastID, '1', NULL, 3 );
 
 -- CRM-14435
@@ -284,7 +285,7 @@ ALTER TABLE `civicrm_event`
   CHANGE is_template is_template tinyint(4) DEFAULT '0' COMMENT 'whether the event has template';
 
 -- CRM-14493
-INSERT INTO civicrm_state_province (country_id, abbreviation, name) VALUES (1085, "61", "Pieria");
+INSERT IGNORE INTO civicrm_state_province (country_id, abbreviation, name) VALUES (1085, "61", "Pieria");
 
 -- CRM-14445
 ALTER TABLE `civicrm_option_group`
@@ -326,8 +327,9 @@ CREATE TABLE IF NOT EXISTS `civicrm_case_type` (
 SELECT @option_group_id_case_type := max(id) from civicrm_option_group where name = 'case_type';
 
 INSERT IGNORE INTO civicrm_case_type
-  (name, {localize field='title'}title{/localize}, {localize field='description'}description{/localize}, is_active, is_reserved, weight)
+  (id, name, {localize field='title'}title{/localize}, {localize field='description'}description{/localize}, is_active, is_reserved, weight)
   SELECT
+    value,
     name,
     {localize field='label'}label{/localize},
     {localize field='description'}description{/localize},
@@ -338,20 +340,19 @@ INSERT IGNORE INTO civicrm_case_type
   WHERE
     option_group_id = @option_group_id_case_type;
 
--- Replace the pseudo-fk to ov.value with a reference to civicrm_case_type.id
-UPDATE civicrm_case
-  SET case_type_id = (
-    SELECT civicrm_case_type.id FROM civicrm_case_type
-    JOIN civicrm_option_value
-      ON civicrm_option_value.name = civicrm_case_type.name
-    WHERE
-      civicrm_option_value.option_group_id = @option_group_id_case_type
-      AND civicrm_option_value.value = replace(civicrm_case.case_type_id, 0x01, '')
-  );
+-- Remove the special character, earlier used as a separator and reference to civicrm_case_type.id
+UPDATE civicrm_case SET case_type_id = replace(case_type_id, 0x01, '');
 
 ALTER TABLE civicrm_case
   MODIFY case_type_id int(10) unsigned COLLATE utf8_unicode_ci NULL COMMENT 'FK to civicrm_case_type.id',
   ADD CONSTRAINT FK_civicrm_case_case_type_id FOREIGN KEY (case_type_id) REFERENCES civicrm_case_type (id) ON DELETE SET NULL;
+
+-- CRM-15343 set the auto increment civicrm_case_type.id start point to max id to avoid conflict in future insertion
+SELECT @max_case_type_id := max(id) from civicrm_case_type;
+SET @query  = CONCAT("ALTER TABLE civicrm_case_type AUTO_INCREMENT = ", IFNULL(@max_case_type_id,1));
+PREPARE alter_case_type_auto_inc FROM @query;
+EXECUTE alter_case_type_auto_inc;
+DEALLOCATE PREPARE alter_case_type_auto_inc;
 
 DELETE FROM civicrm_option_value WHERE option_group_id = @option_group_id_case_type;
 
@@ -427,7 +428,7 @@ SELECT 'SnapChat' AS website
     UNION ALL
 SELECT 'Vine' AS website
 ) AS temp
-LEFT JOIN civicrm_option_value co ON LOWER(co.name) = LOWER(temp.website)
+LEFT JOIN civicrm_option_value co ON co.name = temp.website
 AND option_group_id = @option_web_id
 WHERE co.id IS NULL;
 
@@ -435,6 +436,10 @@ WHERE co.id IS NULL;
 UPDATE civicrm_navigation
 SET civicrm_navigation.url = CONCAT(SUBSTRING(url FROM 1 FOR LOCATE('&', url) - 1), '?', SUBSTRING(url FROM LOCATE('&', url) + 1))
 WHERE civicrm_navigation.url LIKE "%&%" AND civicrm_navigation.url NOT LIKE "%?%";
+
+-- CRM-14478 Add a "cleanup" policy for managed entities
+ALTER TABLE `civicrm_managed`
+ADD COLUMN `cleanup` varchar(32) COMMENT 'Policy on when to cleanup entity (always, never, unused)';
 
 -- CRM-14639
 
@@ -476,7 +481,7 @@ CASE
    THEN 'Ineligible'
   ELSE 'Submitted'
 END
-WHERE option_group_id = @option_grant_status and LOWER(name) IN ('granted', 'pending', 'approved', 'rejected');
+WHERE option_group_id = @option_grant_status and name IN ('granted', 'pending', 'approved', 'rejected');
 
 SELECT @grant_value := max(cast(value as UNSIGNED)) FROM civicrm_option_value WHERE option_group_id = @option_grant_status;
 SELECT @grant_weight := max(weight) FROM civicrm_option_value WHERE option_group_id = @option_grant_status;
@@ -493,7 +498,7 @@ SELECT 'Awaiting Information' AS grantstatus
     UNION ALL
 SELECT 'Withdrawn' AS grantstatus
 ) AS temp
-LEFT JOIN civicrm_option_value co ON LOWER(co.name) = LOWER(temp.grantstatus)
+LEFT JOIN civicrm_option_value co ON co.name = temp.grantstatus
 AND option_group_id = @option_grant_status
 WHERE co.id IS NULL;
 
@@ -521,7 +526,7 @@ WHERE co.id IS NULL;
 
 -- CRM-14197 Add contribution_id to civicrm_line_item
 
-ALTER TABLE civicrm_line_item ADD contribution_id INT(10) COMMENT 'Contribution ID' NULL AFTER entity_id;
+ALTER TABLE civicrm_line_item ADD contribution_id INT(10) unsigned COMMENT 'Contribution ID' NULL AFTER entity_id;
 
 -- FK to civicrm_contribution
 
@@ -532,22 +537,5 @@ ALTER TABLE `civicrm_line_item`
 DROP INDEX `UI_line_item_value`,
 ADD UNIQUE INDEX `UI_line_item_value` (`entity_table`, `entity_id`, `contribution_id`, `price_field_value_id`, `price_field_id`);
 
--- store contribution id for participant records
-UPDATE  civicrm_line_item li LEFT JOIN civicrm_participant_payment pp ON pp.participant_id = li.entity_id
-SET li.contribution_id = pp.contribution_id
-WHERE li.entity_table = 'civicrm_participant';
-
--- update membership line items to hold correct entity table & id & contribution id
-UPDATE  civicrm_line_item li
-LEFT JOIN civicrm_membership_payment mp ON mp.contribution_id = li.entity_id
-LEFT JOIN civicrm_price_field_value pv ON pv.id = li.price_field_value_id
-SET li.entity_table = 'civicrm_membership', li.contribution_id = mp.contribution_id, li.entity_id = mp.membership_id
-WHERE li.entity_table = 'civicrm_contribution'
-AND pv.membership_type_id IS NOT NULL
-AND membership_id IS NOT NULL;
-
--- update line items for contributions with contribution id
-UPDATE civicrm_line_item
-SET contribution_id = entity_id
-WHERE contribution_id IS NULL;
-
+-- update case type menu
+UPDATE civicrm_navigation set url = 'civicrm/a/#/caseType' WHERE url LIKE 'civicrm/admin/options/case_type%';

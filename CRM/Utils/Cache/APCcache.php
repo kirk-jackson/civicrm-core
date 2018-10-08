@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,21 +23,23 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
-class CRM_Utils_Cache_APCcache {
+class CRM_Utils_Cache_APCcache implements CRM_Utils_Cache_Interface {
+
+  use CRM_Utils_Cache_NaiveMultipleTrait; // TODO Consider native implementation.
+  use CRM_Utils_Cache_NaiveHasTrait; // TODO Native implementation
+
   const DEFAULT_TIMEOUT = 3600;
-  const DEFAULT_PREFIX  = '';
+  const DEFAULT_PREFIX = '';
 
   /**
-   * The default timeout to use
+   * The default timeout to use.
    *
    * @var int
    */
@@ -55,13 +57,14 @@ class CRM_Utils_Cache_APCcache {
   protected $_prefix = self::DEFAULT_PREFIX;
 
   /**
-   * Constructor
+   * Constructor.
    *
-   * @param array $config an array of configuration params
+   * @param array $config
+   *   An array of configuration params.
    *
    * @return \CRM_Utils_Cache_APCcache
    */
-  function __construct(&$config) {
+  public function __construct(&$config) {
     if (isset($config['timeout'])) {
       $this->_timeout = intval($config['timeout']);
     }
@@ -73,11 +76,19 @@ class CRM_Utils_Cache_APCcache {
   /**
    * @param $key
    * @param $value
+   * @param null|int|\DateInterval $ttl
    *
    * @return bool
    */
-  function set($key, &$value) {
-    if (!apc_store($this->_prefix . $key, $value, $this->_timeout)) {
+  public function set($key, $value, $ttl = NULL) {
+    CRM_Utils_Cache::assertValidKey($key);
+    if (is_int($ttl) && $ttl <= 0) {
+      return $this->delete($key);
+    }
+
+    $ttl = CRM_Utils_Date::convertCacheTtl($ttl, $this->_timeout);
+    $expires = time() + $ttl;
+    if (!apc_store($this->_prefix . $key, ['e' => $expires, 'v' => $value], $ttl)) {
       return FALSE;
     }
     return TRUE;
@@ -85,11 +96,17 @@ class CRM_Utils_Cache_APCcache {
 
   /**
    * @param $key
+   * @param mixed $default
    *
    * @return mixed
    */
-  function &get($key) {
-    return apc_fetch($this->_prefix . $key);
+  public function get($key, $default = NULL) {
+    CRM_Utils_Cache::assertValidKey($key);
+    $result = apc_fetch($this->_prefix . $key, $success);
+    if ($success && isset($result['e']) && $result['e'] > time()) {
+      return $this->reobjectify($result['v']);
+    }
+    return $default;
   }
 
   /**
@@ -97,21 +114,34 @@ class CRM_Utils_Cache_APCcache {
    *
    * @return bool|string[]
    */
-  function delete($key) {
-    return apc_delete($this->_prefix . $key);
+  public function delete($key) {
+    CRM_Utils_Cache::assertValidKey($key);
+    apc_delete($this->_prefix . $key);
+    return TRUE;
   }
 
-  function flush() {
+  public function flush() {
     $allinfo = apc_cache_info('user');
     $keys = $allinfo['cache_list'];
-    $prefix = $this->_prefix . "CRM_";  // Our keys follows this pattern: ([A-Za-z0-9_]+)?CRM_[A-Za-z0-9_]+
+    $prefix = $this->_prefix;  // Our keys follows this pattern: ([A-Za-z0-9_]+)?CRM_[A-Za-z0-9_]+
     $lp = strlen($prefix);              // Get prefix length
 
     foreach ($keys as $key) {
       $name = $key['info'];
-      if ($prefix == substr($name,0,$lp)) {  // Ours?
-        apc_delete($this->_prefix . $name);
+      if ($prefix == substr($name, 0, $lp)) {
+        // Ours?
+        apc_delete($name);
       }
     }
+    return TRUE;
   }
+
+  public function clear() {
+    return $this->flush();
+  }
+
+  private function reobjectify($value) {
+    return is_object($value) ? unserialize(serialize($value)) : $value;
+  }
+
 }

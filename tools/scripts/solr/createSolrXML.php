@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -36,6 +36,8 @@ define('CHUNK_SIZE', 128);
 
 /**
  * Split a large array of contactIDs into more manageable smaller chunks
+ * @param $contactIDs
+ * @return array
  */
 function &splitContactIDs(&$contactIDs) {
   // contactIDs could be a real large array, so we split it up into
@@ -65,6 +67,8 @@ function &splitContactIDs(&$contactIDs) {
 
 /**
  * Given an array of values, generate the XML in the Solr format
+ * @param $values
+ * @return string
  */
 function &generateSolrXML($values) {
   $result = "<add>\n";
@@ -94,6 +98,9 @@ EOT;
 
 /**
  * Given a set of contact IDs get the values
+ * @param $contactIDs
+ * @param $values
+ * @return array
  */
 function getValues(&$contactIDs, &$values) {
   $values = array();
@@ -130,7 +137,7 @@ SELECT $selectString, $whereField as contact_id
     $sql .= " AND $additionalWhereCond";
   }
 
-  $dao = &CRM_Core_DAO::executeQuery($sql, CRM_Core_DAO::$_nullArray);
+  $dao = CRM_Core_DAO::executeQuery($sql);
   while ($dao->fetch()) {
     foreach ($fields as $fld => $name) {
       if (empty($dao->$fld)) {
@@ -191,6 +198,7 @@ function getLocationInfo(&$contactIDs, &$values) {
 SELECT
   l.entity_id as contact_id, l.name as location_name,
   a.street_address, a.supplemental_address_1, a.supplemental_address_2,
+  a.supplemental_address_3,
   a.city, a.postal_code,
   co.name as county, s.name as state, c.name as country,
   e.email, p.phone, i.name as im
@@ -208,10 +216,10 @@ WHERE l.entity_table = 'civicrm_contact'
 ";
 
   $fields = array('location_name', 'street_address', 'supplemental_address_1',
-    'supplemental_address_2', 'city', 'postal_code', 'county', 'state',
+    'supplemental_address_2', 'supplemental_address_3', 'city', 'postal_code', 'county', 'state',
     'country', 'email', 'phone', 'im',
   );
-  $dao = &CRM_Core_DAO::executeQuery($sql, CRM_Core_DAO::$_nullArray);
+  $dao = CRM_Core_DAO::executeQuery($sql);
   while ($dao->fetch()) {
     foreach ($fields as $fld) {
       if (empty($dao->$fld)) {
@@ -245,7 +253,7 @@ $sql = <<<EOT
 SELECT id
 FROM civicrm_contact
 EOT;
-$dao = &CRM_Core_DAO::executeQuery($sql, CRM_Core_DAO::$_nullArray);
+$dao = CRM_Core_DAO::executeQuery($sql);
 
 $contactIDs = array();
 while ($dao->fetch()) {

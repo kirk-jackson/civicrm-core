@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -24,16 +24,19 @@
  +--------------------------------------------------------------------+
 *}
 {* Js needed to initialize custom field of type ContactReference *}
+{if empty($form.$element_name.frozen)}
 {literal}
 <script type="text/javascript">
   CRM.$(function($) {
-    var $field = $("{/literal}#{$element_name|replace:']':''|replace:'[':'_'}{literal}");
+    // dev/core#362 if in an onbehalf profile reformat the id
+    var $field = $("{/literal}#{if $prefix}{$prefix}_{/if}{$element_name|replace:']':''|replace:'[':'_'}{literal}");
 
     $field.crmSelect2({
       placeholder: {/literal}'{ts escape="js"}- select contact -{/ts}'{literal},
       minimumInputLength: 1,
       ajax: {
         url: {/literal}"{$customUrls.$element_name}"{literal},
+        quietMillis: 300,
         data: function(term) {
           return {term: term};
         },
@@ -48,3 +51,4 @@
 });
 </script>
 {/literal}
+{/if}

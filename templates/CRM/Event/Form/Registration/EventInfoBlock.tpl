@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -34,7 +34,7 @@
     {/if}
     </td>
   </tr>
-  <tr><td><label>{ts}When{/ts}</label></td>
+  <tr><td>{ts}When{/ts}</td>
       <td width="90%">
         {$event.event_start_date|crmDate}
         {if $event.event_end_date}
@@ -51,13 +51,13 @@
 
   {if $isShowLocation}
     {if $location.address.1}
-      <tr><td><label>{ts}Location{/ts}</label></td>
+      <tr><td>{ts}Location{/ts}</td>
           <td>
             {$location.address.1.display|nl2br}
             {if ( $event.is_map &&
             $config->mapProvider &&
       ( ( !empty($location.address.1.geo_code_1) && is_numeric($location.address.1.geo_code_1) )  ||
-        ( $config->mapGeoCoding && !empty($location.address.1.city) AND !empty($location.address.1.state_province) ) ) ) }
+        ( !empty($location.address.1.city) AND !empty($location.address.1.state_province) ) ) ) }
               <br/><a href="{crmURL p='civicrm/contact/map/event' q="reset=1&eid=`$event.id`"}" title="{ts}Map this Address{/ts}" target="_blank">{ts}Map this Location{/ts}</a>
             {/if}
           </td>
@@ -66,7 +66,7 @@
   {/if}{*End of isShowLocation condition*}
 
   {if $location.phone.1.phone || $location.email.1.email}
-    <tr><td><label>{ts}Contact{/ts}</label></td>
+    <tr><td>{ts}Contact{/ts}</td>
         <td>
         {* loop on any phones and emails for this event *}
            {foreach from=$location.phone item=phone}

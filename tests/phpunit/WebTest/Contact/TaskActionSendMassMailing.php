@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 
@@ -35,7 +35,7 @@ class WebTest_Contact_TaskActionSendMassMailing extends CiviSeleniumTestCase {
     parent::setUp();
   }
 
-  function testSelectedContacts() {
+  public function testSelectedContacts() {
     $this->webtestLogin();
 
     // make group
@@ -52,7 +52,7 @@ class WebTest_Contact_TaskActionSendMassMailing extends CiviSeleniumTestCase {
     // Click "check all" box and act on "Add to group" action
     $this->click("//form[@id='Advanced']/div[3]/div/div[2]/table/thead/tr/th[1]/input");
     $this->waitForText('search-status', "50 Selected records only");
-    $this->select("task", "label=Schedule/Send a Mass Mailing");
+    $this->select("task", "label=Email - schedule/send via CiviMail");
     $this->clickLink("Go");
 
     //-------select recipients----------
@@ -132,5 +132,5 @@ class WebTest_Contact_TaskActionSendMassMailing extends CiviSeleniumTestCase {
     $this->click("xpath=//table//tbody/tr[td[1]/text()='$mailingName']/descendant::a[text()='Report']");
     $this->waitForPageToLoad($this->getTimeoutMsec());
   }
-}
 
+}

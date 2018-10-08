@@ -1,23 +1,11 @@
 <?php
-require_once 'CiviTest/CiviUnitTestCase.php';
-require_once 'CiviTest/Contact.php';
 
 /**
  * Class CRM_Core_BAO_OpenIDTest
+ * @group headless
  */
 class CRM_Core_BAO_OpenIDTest extends CiviUnitTestCase {
-  /**
-   * @return array
-   */
-  function get_info() {
-    return array(
-      'name' => 'OpenID BAOs',
-      'description' => 'Test all Core_BAO_OpenID methods.',
-      'group' => 'CiviCRM BAO Tests',
-    );
-  }
-
-  function tearDown() {
+  public function tearDown() {
     // If we truncate only contact, then stale domain and openid records will be left.
     // If we truncate none of these tables, then contactDelete() will incrementally
     // clean correctly.
@@ -25,15 +13,15 @@ class CRM_Core_BAO_OpenIDTest extends CiviUnitTestCase {
     //$this->quickCleanup($tablesToTruncate);
   }
 
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
   /**
-   * add() method (create and update modes)
+   * Add() method (create and update modes)
    */
-  function testAdd() {
-    $contactId = Contact::createIndividual();
+  public function testAdd() {
+    $contactId = $this->individualCreate();
     $this->assertDBRowExist('CRM_Contact_DAO_Contact', $contactId);
 
     $openIdURL = "http://test-username.civicrm.org/";
@@ -74,10 +62,10 @@ class CRM_Core_BAO_OpenIDTest extends CiviUnitTestCase {
   }
 
   /**
-   * ifAllowedToLogin() method (set and reset allowed_to_login)
+   * IfAllowedToLogin() method (set and reset allowed_to_login)
    */
-  function testIfAllowedToLogin() {
-    $contactId = Contact::createIndividual();
+  public function testIfAllowedToLogin() {
+    $contactId = $this->individualCreate();
     $this->assertDBRowExist('CRM_Contact_DAO_Contact', $contactId);
     $openIdURL = "http://test-username.civicrm.org/";
 
@@ -119,10 +107,10 @@ class CRM_Core_BAO_OpenIDTest extends CiviUnitTestCase {
   }
 
   /**
-   * allOpenIDs() method - get all OpenIDs for the given contact
+   * AllOpenIDs() method - get all OpenIDs for the given contact
    */
-  function testAllOpenIDs() {
-    $contactId = Contact::createIndividual();
+  public function testAllOpenIDs() {
+    $contactId = $this->individualCreate();
     $this->assertDBRowExist('CRM_Contact_DAO_Contact', $contactId);
 
     // create first openid
@@ -177,9 +165,8 @@ class CRM_Core_BAO_OpenIDTest extends CiviUnitTestCase {
     $this->assertEquals(0, $openIds[$openIdTwo]['is_primary'], 'Confirm is_primary field value for second openid.');
     $this->assertEquals(0, $openIds[$openIdTwo]['allowed_to_login'], 'Confirm allowed_to_login field value for second openid.');
 
-    //Contact::delete($contactId);
     $this->contactDelete($contactId);
     $this->assertDBRowNotExist('CRM_Contact_DAO_Contact', $contactId);
   }
-}
 
+}

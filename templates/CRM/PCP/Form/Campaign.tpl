@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,11 +23,11 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
-<div id="help">
+<div class="help">
     {ts}Personalize the contents and appearance of your personal campaign page here. You will be able to return to this page and make changes at any time.{/ts}
 </div>
 <fieldset class="crm-pcp-campaign-group">
-<div class="crm-block crm-contribution-campaign-form-block">
+<div class="crm-block crm-form-block crm-contribution-campaign-form-block">
 {crmRegion name="pcp-form-campaign"}
   <div class="crm-section crm-pcp-title-section crm-contribution-form-block-title">
     <div class="label">{$form.pcp_title.label}</div>
@@ -81,10 +81,20 @@
     <div class="label">{$form.is_honor_roll.label}</div>
     <div class="content">
       {$form.is_honor_roll.html}
-      <div class="description">{ts}If this option is checked, an "honor roll" will be displayed with the names (or nicknames) of the people who supported you. (Donors will have the option to remain anonymous. Their names will NOT be listed.){/ts}</div>{* [ML] string changed #9704 *}
+      <div class="description">{ts}If this option is checked, an "honor roll" will be displayed with the names (or nicknames) of the people who supported you. (Donors will have the option to remain anonymous. Their names will NOT be listed.){/ts}</div>
     </div>
     <div class="clear"></div>
   </div>
+  {if $owner_notification_option}
+    <div class="crm-section crm-pcp-is_notify-section crm-contribution-form-block-is_notify">
+      <div class="label">{$form.is_notify.label}</div>
+      <div class="content">
+        {$form.is_notify.html}
+        <div class="description">{ts}If this option is checked, you will receive an email notification when people contribute to your campaign.{/ts}</div>
+      </div>
+      <div class="clear"></div>
+    </div>
+  {/if}
   <div class="crm-section crm-pcp-is_active crm-contribution-form-block-is_active">
     <div class="label">{$form.is_active.label}</div>
     <div class="content">
@@ -94,8 +104,8 @@
     <div class="clear"></div>
   </div>
 {/crmRegion}
+  <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>  
 </div>
-<div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
 </fieldset>
 <script type="text/javascript">
     // Always open attachment div by default for this form

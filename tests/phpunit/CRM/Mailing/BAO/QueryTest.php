@@ -1,34 +1,23 @@
 <?php
-require_once 'CiviTest/CiviUnitTestCase.php';
-require_once 'CiviTest/Contact.php';
 
 /**
  *  Include dataProvider for tests
+ * @group headless
  */
 class CRM_Mailing_BAO_QueryTest extends CiviUnitTestCase {
-  /**
-   * @return array
-   */
-  function get_info() {
-    return array(
-      'name' => 'Mailing BAO Query',
-      'description' => 'Test all Mailing_BAO_Query methods.',
-      'group' => 'CiviMail BAO Query Tests',
-    );
-  }
 
   /**
    * @return CRM_Mailing_BAO_QueryTestDataProvider
    */
   public function dataProvider() {
-    return new CRM_Mailing_BAO_QueryTestDataProvider;
+    return new CRM_Mailing_BAO_QueryTestDataProvider();
   }
 
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
-  function tearDown() {
+  public function tearDown() {
     $tablesToTruncate = array(
       'civicrm_mailing_event_bounce',
       'civicrm_mailing_event_delivered',
@@ -48,23 +37,27 @@ class CRM_Mailing_BAO_QueryTest extends CiviUnitTestCase {
 
   /**
    *  Test CRM_Contact_BAO_Query::searchQuery()
-   *  @dataProvider dataProvider
+   * @dataProvider dataProvider
+   * @param $fv
+   * @param $count
+   * @param $ids
+   * @param $full
    */
-  function testSearch($fv, $count, $ids, $full) {
+  public function testSearch($fv, $count, $ids, $full) {
     $op = new PHPUnit_Extensions_Database_Operation_Insert();
     $op->execute($this->_dbconn,
-      new PHPUnit_Extensions_Database_DataSet_FlatXMLDataSet(
+      $this->createFlatXMLDataSet(
         dirname(__FILE__) . '/queryDataset.xml'
       )
     );
 
     $params = CRM_Contact_BAO_Query::convertFormValues($fv);
-    $obj    = new CRM_Contact_BAO_Query($params);
+    $obj = new CRM_Contact_BAO_Query($params);
 
     // let's set useGroupBy=true, to prevent duplicate records
     $obj->_useGroupBy = TRUE;
 
-    $dao    = $obj->searchQuery();
+    $dao = $obj->searchQuery();
 
     $contacts = array();
     while ($dao->fetch()) {
@@ -73,7 +66,50 @@ class CRM_Mailing_BAO_QueryTest extends CiviUnitTestCase {
 
     sort($contacts, SORT_NUMERIC);
 
-    $this->assertEquals($ids, $contacts, 'In line ' . __LINE__);
+    $this->assertEquals($ids, $contacts);
   }
-}
 
+  /**
+   * CRM-20412: Test accurate count for unique open details
+   */
+  public function testOpenedMailingQuery() {
+    $op = new PHPUnit_Extensions_Database_Operation_Insert();
+    $op->execute($this->_dbconn,
+      $this->createFlatXMLDataSet(
+        dirname(__FILE__) . '/queryDataset.xml'
+      )
+    );
+
+    // ensure that total unique opened mail count is same while
+    //   fetching rows and row count for mailing_id = 14
+    $totalOpenedMailCount = CRM_Mailing_Event_BAO_Opened::getTotalCount(14, NULL, TRUE);
+    $totalOpenedMail = CRM_Mailing_Event_BAO_Opened::getRows(14, NULL, TRUE);
+
+    $this->assertEquals(4, $totalOpenedMailCount);
+    $this->assertEquals(4, count($totalOpenedMail));
+  }
+
+  /**
+   * CRM-21194: Test accurate count for unique trackable URLs
+   */
+  public function testTrackableUrlMailingQuery() {
+    $op = new PHPUnit_Extensions_Database_Operation_Insert();
+    $op->execute($this->_dbconn,
+      $this->createFlatXMLDataSet(
+        dirname(__FILE__) . '/queryDataset.xml'
+      )
+    );
+
+    // ensure that total unique clicked mail count is same while
+    //   fetching rows and row count for mailing_id = 14 and
+    //   trackable_url_id 12
+    $totalDistinctTrackableUrlCount = CRM_Mailing_Event_BAO_TrackableURLOpen::getTotalCount(14, NULL, TRUE, 13);
+    $totalTrackableUrlCount = CRM_Mailing_Event_BAO_TrackableURLOpen::getTotalCount(14, NULL, FALSE, 13);
+    $totalTrackableUrlMail = CRM_Mailing_Event_BAO_TrackableURLOpen::getRows(14, NULL, TRUE, 13);
+
+    $this->assertEquals(3, $totalDistinctTrackableUrlCount, "Accurately display distinct count of unique trackable URLs");
+    $this->assertEquals(4, $totalTrackableUrlCount, "Accurately display count of unique trackable URLs");
+    $this->assertEquals(3, count($totalTrackableUrlMail), "Accurately display list of unique trackable URLs and who clicked them.");
+  }
+
+}

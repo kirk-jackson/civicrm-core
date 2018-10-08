@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,7 +22,7 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 
@@ -35,7 +35,7 @@ class WebTest_Contact_ContactTagTest extends CiviSeleniumTestCase {
     parent::setUp();
   }
 
-  function testTagAContact() {
+  public function testTagAContact() {
     $this->webtestLogin();
 
     $this->openCiviPage("admin/tag", "action=add&reset=1", "_qf_Tag_next");
@@ -72,14 +72,11 @@ class WebTest_Contact_ContactTagTest extends CiviSeleniumTestCase {
     $this->waitForElementPresent("css=div#tagtree");
 
     // check tag we have created
-    $this->click("xpath=//ul/li/label[text()=\"$tagName\"]");
-    $this->waitForElementPresent("css=.success");
-
-    // Is status message correct?
-    $this->waitForText('crm-notification-container', "Saved");
+    $this->click("xpath=//ul/li/span/label[text()=\"$tagName\"]");
+    $this->checkCRMStatus();
   }
 
-  function testTagSetContact() {
+  public function testTagSetContact() {
     $this->webtestLogin();
 
     $this->openCiviPage("admin/tag", "action=add&reset=1&tagset=1");
@@ -126,8 +123,7 @@ class WebTest_Contact_ContactTagTest extends CiviSeleniumTestCase {
 
     // ...need to use mouseDownAt on first result (which is a li element), click does not work
     $this->clickAt("xpath=//div[@class='select2-result-label']");
-    sleep(2);
-    $this->waitForElementPresent("//div[@id='Tag']/div[2]/div/div/ul/li/div[text()='tagset1']");
+    $this->waitForElementPresent("//div[@id='Tag']/div[2]/div/div/ul/li[1]/div[text()='tagset1']");
     $this->click("xpath=//div[@id='Tag']/div[2]/div/div/ul/li[2]/input");
     $this->keyDown("xpath=//div[@id='Tag']/div[2]/div/div/ul/li[2]/input", " ");
     $this->type("xpath=//div[@id='Tag']/div[2]/div/div/ul/li[2]/input", 'tagset2');
@@ -139,7 +135,6 @@ class WebTest_Contact_ContactTagTest extends CiviSeleniumTestCase {
     // ...need to use mouseDownAt on first result (which is a li element), click does not work
     $this->clickAt("xpath=//div[@class='select2-result-label']");
 
-
     // Type search name in autocomplete.
     $this->click("css=input#sort_name_navigation");
     $this->type("css=input#sort_name_navigation", $firstName);
@@ -150,8 +145,8 @@ class WebTest_Contact_ContactTagTest extends CiviSeleniumTestCase {
 
     // Visit contact summary page.
     $this->click("css=ul.ui-autocomplete li");
-    $this->waitForPageToLoad($this->getTimeoutMsec());
+    $this->waitForAjaxContent();
     $this->waitForText('tags', "tagset1, tagset2");
   }
-}
 
+}

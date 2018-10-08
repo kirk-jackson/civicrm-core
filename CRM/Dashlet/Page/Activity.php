@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,12 +23,12 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
+ * @copyright CiviCRM LLC (c) 2004-2018
  * $Id$
  *
  */
@@ -40,19 +40,17 @@
 class CRM_Dashlet_Page_Activity extends CRM_Core_Page {
 
   /**
-   * List activities as dashlet
+   * List activities as dashlet.
    *
    * @return void
-   *
-   * @access public
    */
-  function run() {
+  public function run() {
     $session = CRM_Core_Session::singleton();
     $contactID = $session->get('userID');
     $this->assign('contactID', $contactID);
     $this->assign('contactId', $contactID);
 
-    $context = CRM_Utils_Request::retrieve('context', 'String', $this, FALSE, 'dashlet');
+    $context = CRM_Utils_Request::retrieve('context', 'Alphanumeric', $this, FALSE, 'dashlet');
     $this->assign('context', $context);
 
     // a user can always view their own activity
@@ -77,5 +75,5 @@ class CRM_Dashlet_Page_Activity extends CRM_Core_Page {
 
     return parent::run();
   }
-}
 
+}

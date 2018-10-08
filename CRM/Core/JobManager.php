@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,16 +23,14 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  * This interface defines methods that need to be implemented
  * by every scheduled job (cron task) in CiviCRM.
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 class CRM_Core_JobManager {
 
@@ -51,15 +49,8 @@ class CRM_Core_JobManager {
   var $_source = NULL;
 
 
-  /*
-   * Class constructor
-   *
-   * @param void
-   * @access public
-   *
-   */
   /**
-   *
+   * Class constructor.
    */
   public function __construct() {
     $config = CRM_Core_Config::singleton();
@@ -68,12 +59,6 @@ class CRM_Core_JobManager {
     $this->jobs = $this->_getJobs();
   }
 
-  /*
-   *
-   * @param void
-   * @access private
-   *
-   */
   /**
    * @param bool $auth
    */
@@ -96,16 +81,20 @@ class CRM_Core_JobManager {
       }
     }
     $this->logEntry('Finishing scheduled jobs execution.');
+
+    // Set last cron date for the status check
+    $statusPref = array(
+      'name' => 'checkLastCron',
+      'check_info' => gmdate('U'),
+    );
+    CRM_Core_BAO_StatusPreference::create($statusPref);
   }
 
-  /*
-   * Class destructor
-   *
-   * @param void
-   * @access public
-   *
+  /**
+   * Class destructor.
    */
-  public function __destruct() {}
+  public function __destruct() {
+  }
 
   /**
    * @param $entity
@@ -117,7 +106,7 @@ class CRM_Core_JobManager {
   }
 
   /**
-   * @param $id
+   * @param int $id
    */
   public function executeJobById($id) {
     $job = $this->_getJob($id);
@@ -129,6 +118,17 @@ class CRM_Core_JobManager {
    */
   public function executeJob($job) {
     $this->currentJob = $job;
+
+    // CRM-18231 check if non-production environment.
+    try {
+      CRM_Core_BAO_Setting::isAPIJobAllowedToRun($job->apiParams);
+    }
+    catch (Exception $e) {
+      $this->logEntry('Error while executing ' . $job->name . ': ' . $e->getMessage());
+      $this->currentJob = FALSE;
+      return FALSE;
+    }
+
     $this->logEntry('Starting execution of ' . $job->name);
     $job->saveLastRun();
 
@@ -141,27 +141,31 @@ class CRM_Core_JobManager {
       $params = $job->apiParams;
     }
 
+    CRM_Utils_Hook::preJob($job, $params);
     try {
       $result = civicrm_api($job->api_entity, $job->api_action, $params);
     }
-    catch(Exception$e) {
+    catch (Exception$e) {
       $this->logEntry('Error while executing ' . $job->name . ': ' . $e->getMessage());
+      $result = $e;
     }
+    CRM_Utils_Hook::postJob($job, $params, $result);
     $this->logEntry('Finished execution of ' . $job->name . ' with result: ' . $this->_apiResultToMessage($result));
     $this->currentJob = FALSE;
+
+    //Disable outBound option after executing the job.
+    $environment = CRM_Core_Config::environment(NULL, TRUE);
+    if ($environment != 'Production' && !empty($job->apiParams['runInNonProductionEnvironment'])) {
+      Civi::settings()->set('mailing_backend', array('outBound_option' => CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED));
+    }
   }
 
-  /*
+  /**
    * Retrieves the list of jobs from the database,
    * populates class param.
    *
-   * @param void
-   * @return array ($id => CRM_Core_ScheduledJob)
-   * @access private
-   *
-   */
-  /**
    * @return array
+   *   ($id => CRM_Core_ScheduledJob)
    */
   private function _getJobs() {
     $jobs = array();
@@ -177,16 +181,11 @@ class CRM_Core_JobManager {
     return $jobs;
   }
 
-  /*
-   * Retrieves specific job from the database by id
+  /**
+   * Retrieves specific job from the database by id.
    * and creates ScheduledJob object.
    *
-   * @param void
-   * @access private
-   *
-   */
-  /**
-   * @param null $id
+   * @param int $id
    * @param null $entity
    * @param null $action
    *
@@ -197,8 +196,8 @@ class CRM_Core_JobManager {
     if (is_null($id) && is_null($action)) {
       CRM_Core_Error::fatal('You need to provide either id or name to use this method');
     }
-    $dao             = new CRM_Core_DAO_Job();
-    $dao->id         = $id;
+    $dao = new CRM_Core_DAO_Job();
+    $dao->id = $id;
     $dao->api_entity = $entity;
     $dao->api_action = $action;
     $dao->find();
@@ -212,7 +211,7 @@ class CRM_Core_JobManager {
   /**
    * @param $entity
    * @param $job
-   * @param $params
+   * @param array $params
    * @param null $source
    */
   public function setSingleRunParams($entity, $job, $params, $source = NULL) {
@@ -222,14 +221,8 @@ class CRM_Core_JobManager {
     $this->singleRunParams[$key]['version'] = 3;
   }
 
-  /*
-   *
-   * @return array|null collection of permissions, null if none
-   * @access public
-   *
-   */
   /**
-   * @param $message
+   * @param string $message
    */
   public function logEntry($message) {
     $domainID = CRM_Core_Config::domainID();
@@ -241,10 +234,10 @@ class CRM_Core_JobManager {
       $dao->description .= " (...)";
     }
     if ($this->currentJob) {
-      $dao->job_id  = $this->currentJob->id;
-      $dao->name    = $this->currentJob->name;
-      $dao->command = ts("Entity:") . " " + $this->currentJob->api_entity + " " . ts("Action:") . " " + $this->currentJob->api_action;
-      $data         = "";
+      $dao->job_id = $this->currentJob->id;
+      $dao->name = $this->currentJob->name;
+      $dao->command = ts("Entity:") . " " . $this->currentJob->api_entity . " " . ts("Action:") . " " . $this->currentJob->api_action;
+      $data = "";
       if (!empty($this->currentJob->parameters)) {
         $data .= "\n\nParameters raw (from db settings): \n" . $this->currentJob->parameters;
       }
@@ -271,8 +264,8 @@ class CRM_Core_JobManager {
    */
   private function _apiResultToMessage($apiResult) {
     $status = $apiResult['is_error'] ? ts('Failure') : ts('Success');
-    $msg    = CRM_Utils_Array::value('error_message', $apiResult, 'empty error_message!');
-    $vals   = CRM_Utils_Array::value('values', $apiResult, 'empty values!');
+    $msg = CRM_Utils_Array::value('error_message', $apiResult, 'empty error_message!');
+    $vals = CRM_Utils_Array::value('values', $apiResult, 'empty values!');
     if (is_array($msg)) {
       $msg = serialize($msg);
     }
@@ -282,6 +275,7 @@ class CRM_Core_JobManager {
     $message = $apiResult['is_error'] ? ', Error message: ' . $msg : " (" . $vals . ")";
     return $status . $message;
   }
+
 }
 
 /**
@@ -292,4 +286,3 @@ class CRM_Core_JobManager {
 function CRM_Core_JobManager_scheduledJobFatalErrorHandler($message) {
   throw new Exception("{$message['message']}: {$message['code']}");
 }
-

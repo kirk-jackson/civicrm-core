@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -72,7 +72,9 @@
 
     {* build search form *}
     {include file='CRM/Campaign/Form/Search/Common.tpl' context='gotv'}
-    <div id='voterList'></div>
+    <div class="crm-block crm-form-block crm-search-form-block">
+      <div id='voterList'></div>
+    </div>
 
 {/if} {* end of search form build *}
 
@@ -120,7 +122,7 @@ function loadVoterList( )
      var sourceUrl = {/literal}"{crmURL p='civicrm/ajax/rest' h=0 q='snippet=4&className=CRM_Campaign_Page_AJAX&fnName=voterList' }"{literal};
 
      var searchVoterFor = {/literal}'{$searchVoterFor}'{literal};
-     CRM.$( 'table.gotvVoterRecords', 'form#{/literal}{$form.formName}{literal}').dataTable({
+     CRM.$( 'table.gotvVoterRecords', 'form.{/literal}{$form.formClass}{literal}').dataTable({
                "bFilter"    : false,
     "bAutoWidth" : false,
         "bProcessing": true,
@@ -131,13 +133,12 @@ function loadVoterList( )
     "sDom"       : '<"crm-datatable-pager-top"lfp>rt<"crm-datatable-pager-bottom"ip>',
        "bServerSide": true,
        "sAjaxSource": sourceUrl,
-    "fnDrawCallback": function() { CRM.$().crmtooltip(); },
 
     "fnServerData": function ( sSource, aoData, fnCallback ) {
       var dataLength = aoData.length;
 
       var count = 1;
-      var searchCriteria = new Array( 'campaign_search_voter_for' );
+      var searchCriteria = ['campaign_search_voter_for'];
 
       //get the search criteria.
                         var searchParams = {/literal}{$searchParams}{literal};

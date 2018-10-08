@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -26,7 +26,7 @@
 <div class="crm-block crm-form-block crm-mailing-upload-form-block">
 {include file="CRM/common/WizardHeader.tpl"}
 
-<div id="help">
+<div class="help">
     {ts}You can either <strong>upload</strong> the mailing content from your computer OR <strong>compose</strong> the content on this screen.{/ts} {help id="content-intro"}
 </div>
 
@@ -34,7 +34,7 @@
 
 <table class="form-layout-compressed">
     <tr class="crm-mailing-upload-form-block-from_email_address"><td class="label">{$form.from_email_address.label}</td>
-        <td>{$form.from_email_address.html} {help id ="id-from_email" isAdmin=$isAdmin}</td>
+        <td>{$form.from_email_address.html} {help id ="id-from_email" file="CRM/Contact/Form/Task/Email.hlp" isAdmin=$isAdmin}</td>
     </tr>
     {if $trackReplies}
     <tr class="crm-mailing-upload-form-block-reply_to_address">

@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -36,6 +36,8 @@ define('CHUNK_SIZE', 128);
 
 /**
  * Split a large array of contactIDs into more manageable smaller chunks
+ * @param $contactIDs
+ * @return array
  */
 function &splitContactIDs(&$contactIDs) {
   // contactIDs could be a real large array, so we split it up into
@@ -65,6 +67,11 @@ function &splitContactIDs(&$contactIDs) {
 
 /**
  * Given a set of contact IDs get the values
+ * @param $contactIDs
+ * @param $values
+ * @param $allContactIDs
+ * @param $addditionalContactIDs
+ * @return array
  */
 function getValues(&$contactIDs, &$values, &$allContactIDs, &$addditionalContactIDs) {
   $values = array();
@@ -261,6 +268,7 @@ function getAddressInfo(&$contactIDs, &$values) {
 SELECT     a.id as id,
            c.id as contact_id, l.name as location_type,
            a.street_address, a.supplemental_address_1, a.supplemental_address_2,
+           a.supplemental_address_3,
            a.city, a.postal_code,
            s.name as state, co.name as country
 FROM       civicrm_contact c
@@ -273,7 +281,7 @@ WHERE c.id IN ( $ids )
 
   $fields = array('id', 'contact_id',
     'location_type', 'street_address', 'supplemental_address_1',
-    'supplemental_address_2', 'city', 'postal_code',
+    'supplemental_address_2', 'supplemental_address_3', 'city', 'postal_code',
     'state', 'country',
   );
   $dao = &CRM_Core_DAO::executeQuery($sql);
@@ -454,7 +462,7 @@ function appendValue(&$values, $id, $name, $value, $ignored = FALSE) {
 }
 
 /**
- * @param $daoName
+ * @param string $daoName
  *
  * @return mixed
  */

@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -32,12 +32,12 @@
 {/if}
 {if $extendTargetContacts > 0}
    <div class="status">
-        <p>{ts count=$extendTargetContacts plural='SMS will NOT be sent to contacts of %count Acitivites - (There are more than one Target contacts).'}SMS will NOT be sent to contacts of %count Acitivity - (There are more than one Target contacts).{/ts}</p>
+        <p>{ts count=$extendTargetContacts plural='SMS will NOT be sent to contacts of %count Activities - (there are more than one Target contact).'}SMS will NOT be sent to contacts of %count Activity - (there are more than one Target contact).{/ts}</p>
    </div>
 {/if}
 {if $invalidActivity > 0}
     <div class="status"><p>
-   {ts count=$invalidActivity plural='SMS will NOT be sent to contacts of %count selected acitvites as they are of invalid for this task action.'}SMS will NOT be sent to contacts of %count selected acitvity as they are of invalid for this task action.{/ts}
+   {ts count=$invalidActivity plural='SMS will NOT be sent to contacts of %count selected activities as they are invalid for this task action.'}SMS will NOT be sent to contacts of %count selected activity as they are invalid for this task action.{/ts}
 </p></div>
 {/if}
 
@@ -59,13 +59,14 @@
 
 {if $SMSTask}
     <tr class="crm-contactPhone-form-block-template">
-        <td class="label">{$form.template.label}</td>
-        <td>{$form.template.html}</td>
+        <td class="label">{$form.SMStemplate.label}</td>
+        <td>{$form.SMStemplate.html}</td>
     </tr>
 {/if}
 
 </table>
 {include file="CRM/Contact/Form/Task/SMSCommon.tpl"}
+{include file="CRM/Mailing/Form/InsertTokens.tpl"}
 
 <div class="spacer"> </div>
 
@@ -77,11 +78,11 @@
 {/if}
 
 {if $invalidActivity > 0}
-   {ts count=$invalidActivity plural='SMS will NOT be sent to contacts of %count selected acitvites as they are invalid for this task action.'}SMS will NOT be sent to contacts of %count selected acitvity as they are invalid for this task action.{/ts}
+   {ts count=$invalidActivity plural='SMS will NOT be sent to contacts of %count selected activities as they are invalid for this task action.'}SMS will NOT be sent to contacts of %count selected activity as they are invalid for this task action.{/ts}
 {/if}
 
 {if $extendTargetContacts > 0}
-   {ts count=$extendTargetContacts plural='SMS will NOT be sent to contacts of %count selected acitvites.'}SMS will NOT be sent to contacts of %count selected acitvites.{/ts}
+   {ts count=$extendTargetContacts plural='SMS will NOT be sent to contacts of %count selected activities.'}SMS will NOT be sent to contacts of %count selected activity.{/ts}
 {/if}
 <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
 </div>

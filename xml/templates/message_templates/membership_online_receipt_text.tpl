@@ -1,3 +1,4 @@
+{assign var="greeting" value="{contact.email_greeting}"}{if $greeting}{$greeting},{/if}
 {if $receipt_text}
 {$receipt_text}
 {/if}
@@ -30,15 +31,11 @@
 ===========================================================
 {if !$useForMember && $membership_amount && $is_quick_config}
 {ts 1=$membership_name}%1 Membership{/ts}: {$membership_amount|crmMoney}
-{if $amount}
-{if ! $is_separate_payment }
+{if $amount && !$is_separate_payment }
 {ts}Contribution Amount{/ts}: {$amount|crmMoney}
-{else}
-{ts}Additional Contribution{/ts}: {$amount|crmMoney}
-{/if}
-{/if}
 -------------------------------------------
 {ts}Total{/ts}: {$amount+$membership_amount|crmMoney}
+{/if}
 {elseif !$useForMember && $lineItem and $priceSetID & !$is_quick_config}
 {foreach from=$lineItem item=value key=priceset}
 ---------------------------------------------------------
@@ -59,17 +56,40 @@
 {foreach from=$lineItem item=value key=priceset}
 {capture assign=ts_item}{ts}Item{/ts}{/capture}
 {capture assign=ts_total}{ts}Fee{/ts}{/capture}
+{if $dataArray}
+{capture assign=ts_subtotal}{ts}Subtotal{/ts}{/capture}
+{capture assign=ts_taxRate}{ts}Tax Rate{/ts}{/capture}
+{capture assign=ts_taxAmount}{ts}Tax Amount{/ts}{/capture}
+{capture assign=ts_total}{ts}Total{/ts}{/capture}
+{/if}
 {capture assign=ts_start_date}{ts}Membership Start Date{/ts}{/capture}
 {capture assign=ts_end_date}{ts}Membership End Date{/ts}{/capture}
-{$ts_item|string_format:"%-30s"} {$ts_total|string_format:"%10s"} {$ts_start_date|string_format:"%20s"} {$ts_end_date|string_format:"%20s"}
+{$ts_item|string_format:"%-30s"} {$ts_total|string_format:"%10s"} {if $dataArray} {$ts_subtotal|string_format:"%10s"} {$ts_taxRate|string_format:"%10s"} {$ts_taxAmount|string_format:"%10s"} {$ts_total|string_format:"%10s"} {/if} {$ts_start_date|string_format:"%20s"} {$ts_end_date|string_format:"%20s"}
 --------------------------------------------------------------------------------------------------
 
 {foreach from=$value item=line}
-{capture assign=ts_item}{if $line.html_type eq 'Text'}{$line.label}{else}{$line.field_title} - {$line.label}{/if} {if $line.description} {$line.description}{/if}{/capture}{$ts_item|truncate:30:"..."|string_format:"%-30s"} {$line.line_total|crmMoney|string_format:"%10s"} {$line.start_date|string_format:"%20s"} {$line.end_date|string_format:"%20s"}
+{capture assign=ts_item}{if $line.html_type eq 'Text'}{$line.label}{else}{$line.field_title} - {$line.label}{/if} {if $line.description} {$line.description}{/if}{/capture}{$ts_item|truncate:30:"..."|string_format:"%-30s"} {$line.line_total|crmMoney|string_format:"%10s"}  {if $dataArray} {$line.unit_price*$line.qty|crmMoney:$currency|string_format:"%10s"} {if $line.tax_rate != "" || $line.tax_amount != ""}  {$line.tax_rate|string_format:"%.2f"} %  {$line.tax_amount|crmMoney:$currency|string_format:"%10s"} {else}                  {/if}   {$line.line_total+$line.tax_amount|crmMoney|string_format:"%10s"} {/if} {$line.start_date|string_format:"%20s"} {$line.end_date|string_format:"%20s"}
 {/foreach}
 {/foreach}
+
+{if $dataArray}
+{ts}Amount before Tax{/ts}: {$amount-$totalTaxAmount|crmMoney:$currency}
+
+{foreach from=$dataArray item=value key=priceset}
+{if $priceset || $priceset == 0}
+{$taxTerm} {$priceset|string_format:"%.2f"}%: {$value|crmMoney:$currency}
+{else}
+{ts}No{/ts} {$taxTerm}: {$value|crmMoney:$currency}
+{/if}
+{/foreach}
+{/if}
 --------------------------------------------------------------------------------------------------
 {/if}
+
+{if $totalTaxAmount}
+{ts}Total Tax Amount{/ts}: {$totalTaxAmount|crmMoney:$currency}
+{/if}
+
 {ts}Amount{/ts}: {$amount|crmMoney} {if $amount_level } - {$amount_level} {/if}
 {/if}
 {elseif $membership_amount}
@@ -95,8 +115,10 @@
 {if $is_recur}
 {if $contributeMode eq 'notify' or $contributeMode eq 'directIPN'}
 {ts 1=$cancelSubscriptionUrl}This membership will be renewed automatically. You can cancel the auto-renewal option by visiting this web page: %1.{/ts}
+{if $updateSubscriptionBillingUrl}
 
 {ts 1=$updateSubscriptionBillingUrl}You can update billing details for this automatically renewed membership by <a href="%1">visiting this web page</a>.{/ts}
+{/if}
 {/if}
 {/if}
 

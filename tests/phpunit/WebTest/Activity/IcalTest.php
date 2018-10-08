@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -22,12 +22,10 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 require_once 'CiviTest/CiviSeleniumTestCase.php';
 require_once 'CiviTest/CiviMailUtils.php';
-require_once 'ezc/Base/src/ezc_bootstrap.php';
-require_once 'ezc/autoload/mail_autoload.php';
 
 /**
  * Class WebTest_Activity_IcalTest
@@ -41,10 +39,10 @@ class WebTest_Activity_IcalTest extends CiviSeleniumTestCase {
     parent::setUp();
   }
 
-  function testStandaloneActivityAdd() {
+  public function testStandaloneActivityAdd() {
     $this->webtestLogin();
 
-    $this->openCivipage("admin/setting/preferences/display", "reset=1", "name=activity_assignee_notification_ics");
+    $this->openCiviPage("admin/setting/preferences/display", "reset=1", "name=activity_assignee_notification_ics");
 
     // Notify assignees should be checked by default, so we just need to click the ical setting which is off by default.
     $this->check("name=activity_assignee_notification_ics");
@@ -58,7 +56,7 @@ class WebTest_Activity_IcalTest extends CiviSeleniumTestCase {
     $firstName1 = substr(sha1(rand()), 0, 7);
     $this->webtestAddContact("$firstName1", "Anderson", $firstName1 . "@anderson.com");
 
-    $this->openCivipage("activity", "reset=1&action=add&context=standalone", "_qf_Activity_upload");
+    $this->openCiviPage("activity", "reset=1&action=add&context=standalone", "_qf_Activity_upload");
 
     $this->select("activity_type_id", "value=1");
 
@@ -73,7 +71,7 @@ class WebTest_Activity_IcalTest extends CiviSeleniumTestCase {
 
     $this->waitForElementPresent("xpath=//div[@class='select2-result-label']");
     $this->clickAt("xpath=//div[@class='select2-result-label']");
-    $this->waitForText("xpath=//div[@id='s2id_assignee_contact_id']","$firstName1");
+    $this->waitForText("xpath=//div[@id='s2id_assignee_contact_id']", "$firstName1");
 
     $subject = "Testing Ical attachment for activity assignee";
     $this->type("subject", $subject);
@@ -119,5 +117,5 @@ class WebTest_Activity_IcalTest extends CiviSeleniumTestCase {
       }
     }
   }
-}
 
+}

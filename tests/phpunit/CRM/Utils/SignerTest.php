@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
-| CiviCRM version 4.5                                                |
+| CiviCRM version 5                                                  |
 +--------------------------------------------------------------------+
-| Copyright CiviCRM LLC (c) 2004-2014                                |
+| Copyright CiviCRM LLC (c) 2004-2018                                |
 +--------------------------------------------------------------------+
 | This file is a part of CiviCRM.                                    |
 |                                                                    |
@@ -23,30 +23,19 @@
 | GNU Affero General Public License or the licensing of CiviCRM,     |
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +--------------------------------------------------------------------+
-*/
-require_once 'CiviTest/CiviUnitTestCase.php';
+ */
 
 /**
  * Class CRM_Utils_SignerTest
+ * @group headless
  */
 class CRM_Utils_SignerTest extends CiviUnitTestCase {
 
-  /**
-   * @return array
-   */
-  function get_info() {
-    return array(
-      'name'      => 'Signer Test',
-      'description' => 'Test array-signing functions',
-      'group'      => 'CiviCRM BAO Tests',
-    );
-  }
-
-  function setUp() {
+  public function setUp() {
     parent::setUp();
   }
 
-  function testSignValidate() {
+  public function testSignValidate() {
     $cases = array();
     $cases[] = array(
       'signParams' => array(
@@ -153,7 +142,6 @@ class CRM_Utils_SignerTest extends CiviUnitTestCase {
     );
 
     foreach ($cases as $caseId => $case) {
-      require_once 'CRM/Utils/Signer.php';
       $signer = new CRM_Utils_Signer('secret', array('a', 'b', 'c'));
       $signature = $signer->sign($case['signParams']);
       $this->assertTrue(!empty($signature) && is_string($signature)); // arbitrary
@@ -167,4 +155,5 @@ class CRM_Utils_SignerTest extends CiviUnitTestCase {
       $this->assertTrue(TRUE, 'Validation yielded expected result');
     }
   }
+
 }

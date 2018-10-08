@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -52,7 +52,7 @@
          <table>
            <tr>
             <td>{$form.image_1.html}
-               <a href="#" class="crm-hover-button clear-image" title="{ts}Clear{/ts}"><span class="icon close-icon"></span></a>
+               <a href="#" class="crm-hover-button clear-image" title="{ts}Clear{/ts}"><i class="crm-i fa-times"></i></a>
              <br/>
              <span class="description">{ts}Click above and select a file by double clicking on it.{/ts}</span>
             </td>
@@ -63,7 +63,7 @@
               {$form.height_image_1.html}</br>{$form.height_image_1.label}
             </td>
            </tr>
-         </table> 
+         </table>
         </td>
       </tr>
       <tr class="crm-badge-layout-form-block-image_2">
@@ -72,7 +72,7 @@
          <table>
           <tr>
            <td>{$form.image_2.html}
-              <a href="#" class="crm-hover-button clear-image" title="{ts}Clear{/ts}"><span class="icon close-icon"></span></a>
+              <a href="#" class="crm-hover-button clear-image" title="{ts}Clear{/ts}"><i class="crm-i fa-times"></i></a>
             <br/>
             <span class="description">{ts}Click above and select a file by double clicking on it.{/ts}</span>
            </td>
@@ -83,7 +83,7 @@
             {$form.height_image_2.html}<br/>{$form.height_image_2.label}
            </td>
           </tr>
-         </table> 
+         </table>
         </td>
       </tr>
       <tr class="crm-badge-layout-form-block-participant_image">
@@ -105,11 +105,11 @@
               {$form.alignment_participant_image.html}</br>{$form.alignment_participant_image.label}
             </td>
            </tr>
-         </table> 
+         </table>
         </td>
       </tr>
       <tr class="crm-badge-layout-form-block-elements">
-        <td class="label">{ts}Elements{/ts}</td>
+        <td class="label"><label>{ts}Elements{/ts}</label></td>
         <td>
           <table class="form-layout-compressed">
             <tr>

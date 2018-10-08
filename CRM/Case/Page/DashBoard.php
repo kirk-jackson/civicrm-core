@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,32 +23,27 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+ */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
+ * @copyright CiviCRM LLC (c) 2004-2018
  */
 
 /**
- * This page is for Case Dashboard
+ * This page is for Case Dashboard.
  */
 class CRM_Case_Page_DashBoard extends CRM_Core_Page {
 
   public $useLivePageJS = TRUE;
 
   /**
-   * Heart of the viewing process. The runner gets all the meta data for
-   * the contact and calls the appropriate type of page to view.
+   * Heart of the viewing process.
    *
-   * @return void
-   * @access public
-   *
+   * The runner gets all the meta data for the contact and calls the appropriate type of page to view.
    */
-  function preProcess() {
+  public function preProcess() {
     //check for civicase access.
     if (!CRM_Case_BAO_Case::accessCiviCase()) {
       CRM_Core_Error::fatal(ts('You are not authorized to access this page.'));
@@ -63,7 +58,7 @@ class CRM_Case_Page_DashBoard extends CRM_Core_Page {
     }
 
     $session = CRM_Core_Session::singleton();
-    $allCases = CRM_Utils_Request::retrieve('all', 'Positive', $session);
+    $allCases = CRM_Utils_Request::retrieve('all', 'Positive', $this);
 
     CRM_Utils_System::setTitle(ts('CiviCase Dashboard'));
 
@@ -71,9 +66,10 @@ class CRM_Case_Page_DashBoard extends CRM_Core_Page {
 
     //validate access for all cases.
     if ($allCases && !CRM_Core_Permission::check('access all cases and activities')) {
-      $allCases = FALSE;
+      $allCases = 0;
       CRM_Core_Session::setStatus(ts('You are not authorized to access all cases and activities.'), ts('Sorry'), 'error');
     }
+    $this->assign('all', $allCases);
     if (!$allCases) {
       $this->assign('myCases', TRUE);
     }
@@ -87,30 +83,39 @@ class CRM_Case_Page_DashBoard extends CRM_Core_Page {
     ) {
       $this->assign('newClient', TRUE);
     }
-    $summary  = CRM_Case_BAO_Case::getCasesSummary($allCases, $userID);
-    $upcoming = CRM_Case_BAO_Case::getCases($allCases, $userID, 'upcoming');
-    $recent   = CRM_Case_BAO_Case::getCases($allCases, $userID, 'recent');
+    $summary = CRM_Case_BAO_Case::getCasesSummary($allCases);
+    $upcoming = CRM_Case_BAO_Case::getCases($allCases, array(), 'dashboard', TRUE);
+    $recent = CRM_Case_BAO_Case::getCases($allCases, array('type' => 'recent'), 'dashboard', TRUE);
 
     $this->assign('casesSummary', $summary);
     if (!empty($upcoming)) {
-      $this->assign('upcomingCases', $upcoming);
+      $this->assign('upcomingCases', TRUE);
     }
     if (!empty($recent)) {
-      $this->assign('recentCases', $recent);
+      $this->assign('recentCases', TRUE);
     }
+
+    $controller = new CRM_Core_Controller_Simple('CRM_Case_Form_Search',
+      ts('Case'), CRM_Core_Action::BROWSE,
+      NULL,
+      FALSE, FALSE, TRUE
+    );
+    $controller->set('context', 'dashboard');
+    $controller->setEmbedded(TRUE);
+    $controller->process();
+    $controller->run();
   }
 
   /**
-   * This function is the main function that is called when the page loads,
+   * the main function that is called when the page loads,
    * it decides the which action has to be taken for the page.
    *
-   * return null
-   * @access public
+   * @return null
    */
-  function run() {
+  public function run() {
     $this->preProcess();
 
     return parent::run();
   }
-}
 
+}

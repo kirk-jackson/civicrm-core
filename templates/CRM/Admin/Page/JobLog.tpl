@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,24 +23,25 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
-<div id="help">
+<div class="help">
     {ts}This screen presents the list of most recent 1,000 scheduled jobs log entries.{/ts} {$docLink}
 </div>
 
+<div class="crm-content-block crm-block">
+
 {if $jobId}
-    <h1>{ts}List of log entries for:{/ts} {$jobName}</h1>
+    <h3>{ts}List of log entries for:{/ts} {$jobName}</h3>
 {/if}
 
-<div class="action-link">
-  <a href="{crmURL p='civicrm/admin/job' q="reset=1"}" id="jobsList-top" class="button"><span><div class="icon back-icon"></div>{ts}Back to Scheduled Jobs Listing{/ts}</span></a>
-</div>
+  <div class="action-link">
+    <a href="{crmURL p='civicrm/admin/job' q="reset=1"}" id="jobsList-top" class="button"><span><i class="crm-i fa-chevron-left"></i> {ts}Back to Scheduled Jobs Listing{/ts}</span></a>
+  </div>
 
 {if $rows}
-<div id="ltype">
+  <div id="ltype">
         {strip}
         {* handle enable/disable actions*}
    {include file="CRM/common/enableDisableApi.tpl"}
-   {include file="CRM/common/crmeditable.tpl"}
         <table class="selector row-highlight">
         <tr class="columnheader">
             <th >{ts}Date{/ts}</th>
@@ -61,7 +62,7 @@
         </table>
         {/strip}
 
-</div>
+  </div>
 {elseif $action ne 1}
     <div class="messages status no-popup">
       <div class="icon inform-icon"></div>&nbsp;
@@ -73,6 +74,7 @@
      </div>
 {/if}
 
-<div class="action-link">
-  <a href="{crmURL p='civicrm/admin/job' q="reset=1"}" id="jobsList-bottom" class="button"><span><div class="icon back-icon"></div>{ts}Back to Scheduled Jobs Listing{/ts}</span></a>
+  <div class="action-link">
+    <a href="{crmURL p='civicrm/admin/job' q="reset=1"}" id="jobsList-bottom" class="button"><span><i class="crm-i fa-chevron-left"></i> {ts}Back to Scheduled Jobs Listing{/ts}</span></a>
+  </div>
 </div>

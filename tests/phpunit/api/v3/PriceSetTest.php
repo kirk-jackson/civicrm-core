@@ -1,10 +1,9 @@
 <?php
-
 /*
  +--------------------------------------------------------------------+
-| CiviCRM version 4.5                                                |
+| CiviCRM version 5                                                  |
 +--------------------------------------------------------------------+
-| Copyright CiviCRM LLC (c) 2004-2014                                |
+| Copyright CiviCRM LLC (c) 2004-2018                                |
 +--------------------------------------------------------------------+
 | This file is a part of CiviCRM.                                    |
 |                                                                    |
@@ -24,12 +23,11 @@
 | GNU Affero General Public License or the licensing of CiviCRM,     |
 | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
 +--------------------------------------------------------------------+
-*/
-
-require_once 'CiviTest/CiviUnitTestCase.php';
+ */
 
 /**
  * Class api_v3_PriceSetTest
+ * @group headless
  */
 class api_v3_PriceSetTest extends CiviUnitTestCase {
   protected $_apiversion = 3;
@@ -39,10 +37,13 @@ class api_v3_PriceSetTest extends CiviUnitTestCase {
   protected $_entity = 'price_set';
 
   public $DBResetRequired = TRUE;
+
+  /**
+   * Set up for class.
+   */
   public function setUp() {
     parent::setUp();
     $this->_params = array(
-#     [domain_id] =>
       'name' => 'default_goat_priceset',
       'title' => 'Goat accessories',
       'is_active' => 1,
@@ -55,22 +56,59 @@ class api_v3_PriceSetTest extends CiviUnitTestCase {
     );
   }
 
-  function tearDown() {
+  public function tearDown() {
   }
 
+  /**
+   * Test create price set.
+   */
   public function testCreatePriceSet() {
     $result = $this->callAPIAndDocument($this->_entity, 'create', $this->_params, __FUNCTION__, __FILE__);
-    $this->assertEquals(1, $result['count'], 'In line ' . __LINE__);
-    $this->assertNotNull($result['values'][$result['id']]['id'], 'In line ' . __LINE__);
+    $this->assertEquals(1, $result['count']);
+    $this->assertNotNull($result['values'][$result['id']]['id']);
     $this->getAndCheck($this->_params, $result['id'], $this->_entity);
   }
 
+  /**
+   * Test for creating price sets used for both events and contributions.
+   */
+  public function testCreatePriceSetForEventAndContribution() {
+    // Create the price set
+    $createParams = array(
+      'name' => 'some_price_set',
+      'title' => 'Some Price Set',
+      'is_active' => 1,
+      'financial_type_id' => 1,
+      'extends' => array(1, 2),
+    );
+    $createResult = $this->callAPIAndDocument($this->_entity, 'create', $createParams, __FUNCTION__, __FILE__);
+
+    // Get priceset we just created.
+    $result = $this->callAPISuccess($this->_entity, 'getSingle', array(
+      'id' => $createResult['id'],
+    ));
+
+    // Count the number of items in 'extends'.
+    $this->assertEquals(2, count($result['extends']));
+  }
+
+  /**
+   * Check that no name doesn't cause failure.
+   */
+  public function testCreatePriceSetNoName() {
+    $params = $this->_params;
+    unset($params['name']);
+    $this->callAPISuccess($this->_entity, 'create', $params);
+  }
+
+  /**
+   */
   public function testGetBasicPriceSet() {
     $getParams = array(
       'name' => 'default_contribution_amount',
     );
     $getResult = $this->callAPIAndDocument($this->_entity, 'get', $getParams, __FUNCTION__, __FILE__);
-    $this->assertEquals(1, $getResult['count'], 'In line ' . __LINE__);
+    $this->assertEquals(1, $getResult['count']);
   }
 
   public function testEventPriceSet() {
@@ -93,16 +131,16 @@ class api_v3_PriceSetTest extends CiviUnitTestCase {
     $result = $this->callAPISuccess($this->_entity, 'get', array(
       'id' => $createResult['id'],
     ));
-    $this->assertEquals(array('civicrm_event' => array($event['id'])), $result['values'][$createResult['id']]['entity'], 'In line ' . __LINE__);
+    $this->assertEquals(array('civicrm_event' => array($event['id'])), $result['values'][$createResult['id']]['entity']);
   }
 
   public function testDeletePriceSet() {
     $startCount = $this->callAPISuccess($this->_entity, 'getcount', array());
     $createResult = $this->callAPISuccess($this->_entity, 'create', $this->_params);
     $deleteParams = array('id' => $createResult['id']);
-    $deleteResult = $this->callAPIAndDocument($this->_entity, 'delete', $deleteParams, __FUNCTION__, __FILE__);
+    $this->callAPIAndDocument($this->_entity, 'delete', $deleteParams, __FUNCTION__, __FILE__);
     $endCount = $this->callAPISuccess($this->_entity, 'getcount', array());
-    $this->assertEquals($startCount, $endCount, 'In line ' . __LINE__);
+    $this->assertEquals($startCount, $endCount);
   }
 
   public function testGetFieldsPriceSet() {
@@ -111,10 +149,10 @@ class api_v3_PriceSetTest extends CiviUnitTestCase {
   }
 
   public static function setUpBeforeClass() {
-      // put stuff here that should happen before all tests in this unit
+    // put stuff here that should happen before all tests in this unit
   }
 
-  public static function tearDownAfterClass(){
+  public static function tearDownAfterClass() {
     $tablesToTruncate = array(
       'civicrm_contact',
       'civicrm_contribution',
@@ -122,5 +160,5 @@ class api_v3_PriceSetTest extends CiviUnitTestCase {
     $unitTest = new CiviUnitTestCase();
     $unitTest->quickCleanup($tablesToTruncate);
   }
-}
 
+}

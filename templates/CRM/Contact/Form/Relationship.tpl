@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 5                                                  |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2018                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -24,9 +24,7 @@
  +--------------------------------------------------------------------+
 *}
 {* this template is used for adding/editing/viewing relationships  *}
-{if $cdType }
-  {include file="CRM/Custom/Form/CustomData.tpl"}
-{else}
+
   {if $action eq 4 } {* action = view *}
     <div class="crm-block crm-content-block crm-relationship-view-block">
       <table class="crm-info-panel">
@@ -59,18 +57,18 @@
                 {if $row.is_permission_a_b}
                   <div>
                   {if $row.rtype EQ 'a_b' AND $is_contact_id_a}
-                    {ts 1=$displayName 2=$row.display_name}<strong>%1</strong> can view and update information about %2.{/ts}
+                    {include file="CRM/Contact/Page/View/RelationshipPerm.tpl" permType=$row.is_permission_a_b permDisplayName=$displayName otherDisplayName=$row.display_name displayText=true}
                   {else}
-                    {ts 1=$row.display_name 2=$displayName}<strong>%1</strong> can view and update information about %2.{/ts}
+                    {include file="CRM/Contact/Page/View/RelationshipPerm.tpl" permType=$row.is_permission_a_b otherDisplayName=$displayName permDisplayName=$row.display_name displayText=true}
                   {/if}
                   </div>
                 {/if}
                 {if $row.is_permission_b_a}
                   <div>
                   {if $row.rtype EQ 'a_b' AND $is_contact_id_a}
-                    {ts 1=$row.display_name 2=$displayName}<strong>%1</strong> can view and update information about %2.{/ts}
+                    {include file="CRM/Contact/Page/View/RelationshipPerm.tpl" permType=$row.is_permission_b_a otherDisplayName=$displayName permDisplayName=$row.display_name displayText=true}
                   {else}
-                    {ts 1=$displayName 2=$row.display_name}<strong>%1</strong> can view and update information about %2.{/ts}
+                    {include file="CRM/Contact/Page/View/RelationshipPerm.tpl" permType=$row.is_permission_b_a permDisplayName=$displayName otherDisplayName=$row.display_name displayText=true}
                   {/if}
                   </div>
                 {/if}
@@ -118,15 +116,15 @@
           {capture assign="contact_b"}{if $action eq 1}{ts}selected contact(s){/ts}{else}{$display_name_b}{/if}{/capture}
           <td class="label"><label>{ts}Permissions{/ts}</label></td>
           <td>
+            {ts 1=$display_name_a 2=$contact_b}Permission for <strong>%1</strong> to access information about <strong>%2</strong>{/ts}<br />
             {$form.is_permission_a_b.html}
-            {ts 1=$display_name_a 2=$contact_b}<strong>%1</strong> can view and update information about %2.{/ts}
           </td>
         </tr>
         <tr class="crm-relationship-form-block-is_permission_b_a">
-          <td class="label"></td>
+          <td class="label"> </td>
           <td>
+            {ts 1=$contact_b|ucfirst 2=$display_name_a}Permission for <strong>%1</strong> to access information about <strong>%2</strong>{/ts}<br />
             {$form.is_permission_b_a.html}
-            {ts 1=$contact_b|ucfirst 2=$display_name_a}<strong>%1</strong> can view and update information about %2.{/ts}
           </td>
         </tr>
         <tr class="crm-relationship-form-block-is_active">
@@ -139,17 +137,95 @@
     </div>
   {/if}
   {if ($action EQ 1) OR ($action EQ 2) }
-    {*include custom data js file - setting includeWysiwygEditor=TRUE because it's already been loaded*}
-    {include file="CRM/common/customData.tpl" includeWysiwygEditor=TRUE}
+    {*include custom data js file *}
+    {include file="CRM/common/customData.tpl"}
     <script type="text/javascript">
       {literal}
       CRM.$(function($) {
         var
-          $form = $("form#{/literal}{$form.formName}{literal}"),
-          relationshipData = {/literal}{$relationshipData|@json_encode}{literal};
-        $('[name=relationship_type_id]', $form).change(function() {
+          $form = $("form.{/literal}{$form.formClass}{literal}"),
+          $relationshipTypeSelect = $('[name=relationship_type_id]', $form),
+          relationshipData = {},
+          contactTypes = {/literal}{$contactTypes|@json_encode}{literal};
+
+        (function init () {
+          // Refresh options if relationship types were edited
+          $('body').on('crmOptionsEdited', 'a.crm-option-edit-link', refreshRelationshipData);
+          // Initial load and trigger change on select
+          refreshRelationshipData().done(function() {
+            $relationshipTypeSelect.change();
+          });
+          $relationshipTypeSelect.change(function() {
+            var $select = $(this);
+
+            // ensure we have relationship data before changing anything
+            getRelationshipData().then(function() {
+              updateSelect($select);
+            })
+          });
+        })();
+
+        /**
+         * Fetch contact types and reset relationship data
+         */
+        function refreshRelationshipData() {
+          // reset
+          relationshipData = {};
+
+          return getRelationshipData();
+        }
+
+        /**
+         * Fetches the relationship data using latest relationship types
+         */
+        function getRelationshipData() {
+          var defer = $.Deferred();
+
+          if (!$.isEmptyObject(relationshipData)) {
+            defer.resolve(relationshipData);
+          }
+
+          CRM.api3("RelationshipType", "get", {"options": {"limit":0}})
+            .done(function (data) {
+              $.each(data.values, function (key, relType) {
+                // Loop over the suffixes for a relationship type
+                $.each(["a", "b"], function (index, suffix) {
+                  var subtype = relType["contact_subtype_" + suffix];
+                  var type = subtype || relType["contact_type_" + suffix];
+                  var label = getContactTypeLabel(type) || "Contact";
+                  label = label.toLowerCase();
+                  relType["placeholder_" + suffix] = "- select " + label + " -";
+                });
+
+                relationshipData[relType["id"]] = relType;
+              });
+
+              defer.resolve(relationshipData);
+            });
+
+          return defer.promise();
+        }
+
+        /**
+         * Gets a contact type label based on a provided name
+         * @param {String} name - the name of the contact type
+         */
+        function getContactTypeLabel(name) {
+          var label = "";
+
+          $.each(contactTypes, function(index, contactType) {
+            if (contactType.name === name) {
+              label = contactType.label;
+              return false;
+            }
+          });
+
+          return label;
+        }
+
+        function updateSelect($select) {
           var
-            val = $(this).val(),
+            val = $select.val(),
             $contactField = $('#related_contact_id[type=text]', $form);
           if (!val && $contactField.length) {
             $contactField
@@ -174,12 +250,11 @@
               if (contact_sub_type) {
                 api.params.contact_sub_type = contact_sub_type;
               }
-              // Todo: pass sub-type to new contact profile otherwise relationship create will fail. Disabling it completely for now.
-              $contactField.data('create-links', !contact_sub_type);
               $contactField
                 .val('')
                 .prop('disabled', false)
                 .data('api-params', api)
+                .data('user-filter', {})
                 .attr('placeholder', relationshipData[rType]['placeholder_' + target])
                 .change();
             }
@@ -187,13 +262,9 @@
             // Show/hide employer field
             $('.crm-relationship-form-block-is_current_employer', $form).toggle(rType === {/literal}'{$employmentRelationship}'{literal});
 
-            // Swap the permission checkboxes to match selected relationship direction
-            $('#is_permission_a_b', $form).attr('name', 'is_permission_' + source + '_' + target);
-            $('#is_permission_b_a', $form).attr('name', 'is_permission_' + target + '_' + source);
-
             CRM.buildCustomData('Relationship', rType);
           }
-        }).change();
+        }
       });
       {/literal}
     </script>
@@ -205,5 +276,3 @@
     </div>
   {/if}
   <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
-{/if} {* close of custom data else*}
-
